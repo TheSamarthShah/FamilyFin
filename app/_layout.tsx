@@ -1,4 +1,3 @@
-// app/_layout.tsx
 import { Slot } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { PaperProvider } from 'react-native-paper';

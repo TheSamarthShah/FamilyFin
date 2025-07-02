@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Button, Card, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { addTransaction, getTransactions } from '../services/sheets';
-import { transformSheetData } from '../utils/transform';
+import { addTransaction, getTransactions } from '../../services/sheets';
+import { transformSheetData } from '../../utils/transform';
 
 export default function HomeScreen() {
   const { colors } = useTheme();
