@@ -1,9 +1,10 @@
-import { getUsers } from '@/services/sheets';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { Button, Divider, Menu, Provider, Text } from 'react-native-paper';
+import { getUsers } from "@/services/sheets";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
+import { Button, Divider, Menu } from "react-native-paper";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 type User = {
   code: string;
@@ -27,38 +28,43 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!selectedUser) return;
 
-    // Find the full user object
     const user = users.find((u) => u.code === selectedUser);
     if (!user) return;
 
-    // Store the entire user object in AsyncStorage
-    await AsyncStorage.setItem('userData', JSON.stringify(user));
-    router.replace('/'); // Navigate to home
+    await AsyncStorage.setItem("userData", JSON.stringify(user));
+    router.replace("/");
   };
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator />
-        <Text>Loading users…</Text>
+        <Text className="mt-2 text-gray-700">Loading users…</Text>
       </View>
     );
   }
 
   return (
-    <Provider>
-      <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
+    <SafeAreaProvider>
+      <SafeAreaView  className="bg-background dark:bg-background-dark p-4 rounded-card">
+        <Text className="text-primary dark:text-primary-dark font-heading text-lg">
+          Hello, themed world!
+        </Text>
+      </SafeAreaView>
+
+      <View className="flex-1 justify-center items-center px-6 bg-white">
         <Menu
           visible={visible}
           onDismiss={() => setVisible(false)}
           anchor={
-            <Button 
-              mode="outlined" 
+            <Button
+              mode="outlined"
               onPress={() => setVisible(true)}
-              style={{ marginBottom: 16 }}
+              className="mb-4"
+              labelStyle={{ fontSize: 16 }}
             >
-              {selectedUser 
-                ? users.find(u => u.code === selectedUser)?.name 
+              {selectedUser
+                ? users.find((u) => u.code === selectedUser)?.name
                 : "Select User"}
             </Button>
           }
@@ -81,11 +87,12 @@ export default function LoginScreen() {
           mode="contained"
           onPress={handleLogin}
           disabled={!selectedUser}
-          style={{ marginTop: 16 }}
+          className="mt-4 w-full"
+          labelStyle={{ fontSize: 16 }}
         >
           Login
         </Button>
       </View>
-    </Provider>
+    </SafeAreaProvider>
   );
 }
