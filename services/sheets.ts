@@ -33,31 +33,32 @@ interface SheetResponse {
   data?: any[][];
   error?: string;
 }
-export const getUsers = async (): Promise<any[]> => {
+export const getUsers = async (): Promise<any> => {
   try {
-    const response = await axios.get<any>(`${BASE_URL}`,{
-  withCredentials: false
-});
-    console.log(response.data.data);
-    if (response.data.error) {
-      throw new Error(response.data.error);
-    }
-    
-    if (!response.data.data) {
+    const response = await axios.get<any>(`${BASE_URL}`, {
+      withCredentials: false,
+    });
+
+    const rows = response.data?.data;
+    if (!rows || !Array.isArray(rows) || rows.length < 2) {
       return [];
     }
-    
-    // Skip headers
-    const [, ...dataRows] = response.data.data;
-    
-    return dataRows.map((row: any[]) => ({
-      code: row[0]?.toString() || '',
-      name: row[1]?.toString() || '',
-      email: row[2]?.toString() || '',
-    }));
-    
+
+    // Skip the header
+    const [, ...dataRows] = rows;
+
+    // Validate and parse each row
+    return dataRows
+      .filter(row => Array.isArray(row) && row.length >= 3)
+      .map(row => ({
+        code: row[0]?.toString().trim() ?? '',
+        name: row[1]?.toString().trim() ?? '',
+        email: row[2]?.toString().trim() ?? '',
+      }))
+      .filter(user => user.code && user.name); // filter out empties
+
   } catch (err) {
     console.error('Failed to fetch users:', err);
-    throw err; 
+    return [];
   }
 };

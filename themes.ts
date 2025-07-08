@@ -1,11 +1,18 @@
+import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import { Colors } from './colors';
 
 export const lightTheme = {
-  dark: false,
-  colors: Colors.light,
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    ...Colors.light,
+  },
 };
 
 export const darkTheme = {
-  dark: true,
-  colors: Colors.dark,
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    ...Colors.dark,
+  },
 };

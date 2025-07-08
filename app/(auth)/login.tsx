@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
-import { Button, Divider, Menu } from "react-native-paper";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 type User = {
@@ -39,7 +38,7 @@ export default function LoginScreen() {
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator />
-        <Text className="mt-2 text-gray-700">Loading users…</Text>
+        <Text className="mt-2 text-gray-700">Loading ...</Text>
       </View>
     );
   }
@@ -47,12 +46,10 @@ export default function LoginScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView  className="bg-background dark:bg-background-dark p-4 rounded-card">
-        <Text className="text-primary dark:text-primary-dark font-heading text-lg">
-          Hello, themed world!
-        </Text>
+        
       </SafeAreaView>
 
-      <View className="flex-1 justify-center items-center px-6 bg-white">
+      {/* <View className="flex-1 justify-center items-center px-6 bg-white">
         <Menu
           visible={visible}
           onDismiss={() => setVisible(false)}
@@ -92,7 +89,7 @@ export default function LoginScreen() {
         >
           Login
         </Button>
-      </View>
+      </View> */}
     </SafeAreaProvider>
   );
 }
