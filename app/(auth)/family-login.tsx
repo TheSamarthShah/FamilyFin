@@ -1,66 +1,83 @@
-
+import Button from "@/components/Button";
+import Loading from "@/components/Loading";
+import { useLoading } from "@/context/LoadingContext";
 import { loginFamily } from "@/services/pocketbase";
+import { BUTTON_TXT, COMMON_TXT, LOGIN_PAGE } from "@/utils/text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Button, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 
 export default function FamilyLogin() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading(); // using global loading context
   const router = useRouter();
 
   const handleSubmit = async () => {
-    if (!code || !password) {
-      alert("Please enter both code and password");
+    if (!code.trim() || !password.trim()) {
+      alert("Please enter both Family Code and Password");
       return;
     }
 
     try {
       setLoading(true);
-      const auth = await loginFamily(code, password);
+      const auth = await loginFamily(code.trim(), password.trim());
 
-      // Save only what you need — token, family code, etc.
-      await AsyncStorage.setItem("familyData", JSON.stringify({
-        code: auth.record.username,
-        token: auth.token,
-        id: auth.record.id,
-      }));
+      await AsyncStorage.setItem(
+        "familyData",
+        JSON.stringify({
+          code: auth.record.username,
+          token: auth.token,
+          id: auth.record.id,
+        })
+      );
 
       router.replace("/(auth)/user-login");
     } catch (err: any) {
-      console.error("Login error", err);
-      alert(err.message || "Login failed");
+      console.error("Login error:", err);
+      alert(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (isLoading) return <Loading />;
+
   return (
-    <View className="flex-1 justify-center p-6 bg-background dark:bg-background-dark">
-      <Text className="text-xl font-bold mb-4 text-primary dark:text-primary-dark">
-        Family Code
+    <View className="flex-1 justify-center px-6 bg-background dark:bg-background-dark">
+      <Text className="text-2xl font-heading text-primary dark:text-primary-dark mb-6">
+        {COMMON_TXT.APP_TITLE}
       </Text>
 
-      <TextInput
-        placeholder="Family Code"
-        value={code}
-        onChangeText={setCode}
-        className="border border-muted p-2 mb-2 text-black dark:text-white"
-        placeholderTextColor="#9CA3AF"
-      />
+      <View className="mb-4">
+        <Text className="text-muted dark:text-muted mb-1">{LOGIN_PAGE.CODE}</Text>
+        <TextInput
+          value={code}
+          onChangeText={setCode}
+          placeholder="Enter your code"
+          placeholderTextColor="#9CA3AF"
+          className="bg-surface text-black dark:text-white px-4 py-2 rounded-md border border-neutral"
+        />
+      </View>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        className="border border-muted p-2 mb-4 text-black dark:text-white"
-        placeholderTextColor="#9CA3AF"
-      />
+      <View className="mb-6">
+        <Text className="text-muted dark:text-muted mb-1">{LOGIN_PAGE.PASSWORD}</Text>
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Enter password"
+          placeholderTextColor="#9CA3AF"
+          className="bg-surface text-black dark:text-white px-4 py-2 rounded-md border border-neutral"
+        />
+      </View>
 
-      <Button title={loading ? "Logging in..." : "Continue"} onPress={handleSubmit} disabled={loading} />
+      <Button
+        title={BUTTON_TXT.CONTINUE}
+        onPress={handleSubmit}
+        loading={isLoading}
+      />
     </View>
   );
 }
