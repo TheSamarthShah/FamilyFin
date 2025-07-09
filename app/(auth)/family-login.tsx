@@ -1,3 +1,5 @@
+
+import { loginFamily } from "@/services/pocketbase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -6,14 +8,33 @@ import { Button, Text, TextInput, View } from "react-native";
 export default function FamilyLogin() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async () => {
-    const isValid = code.length > 1 && password === "1234";
-    if (!isValid) return alert("Invalid");
+    if (!code || !password) {
+      alert("Please enter both code and password");
+      return;
+    }
 
-    await AsyncStorage.setItem("familyData", JSON.stringify({ code }));
-    router.replace("/(auth)/user-login");
+    try {
+      setLoading(true);
+      const auth = await loginFamily(code, password);
+
+      // Save only what you need — token, family code, etc.
+      await AsyncStorage.setItem("familyData", JSON.stringify({
+        code: auth.record.username,
+        token: auth.token,
+        id: auth.record.id,
+      }));
+
+      router.replace("/(auth)/user-login");
+    } catch (err: any) {
+      console.error("Login error", err);
+      alert(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,7 +60,7 @@ export default function FamilyLogin() {
         placeholderTextColor="#9CA3AF"
       />
 
-      <Button title="Continue" onPress={handleSubmit} />
+      <Button title={loading ? "Logging in..." : "Continue"} onPress={handleSubmit} disabled={loading} />
     </View>
   );
 }

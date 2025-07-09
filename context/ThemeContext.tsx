@@ -1,30 +1,42 @@
-import React, { createContext, useContext, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Appearance, ColorSchemeName } from 'react-native';
 
 type ThemeType = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: ThemeType;
-  toggleTheme: () => void;
+  isThemeLoaded: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
-  toggleTheme: () => {},
+  isThemeLoaded: false,
 });
 
 export const useThemeContext = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const systemTheme = useColorScheme();
-    const [theme, setTheme] = useState<ThemeType>(systemTheme || 'light');
+  const [theme, setTheme] = useState<ThemeType>('light');
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  useEffect(() => {
+    const updateTheme = (colorScheme: ColorSchemeName) => {
+      setTheme(colorScheme === 'dark' ? 'dark' : 'light');
+      setIsThemeLoaded(true);
+    };
+
+    const systemTheme = Appearance.getColorScheme();
+    updateTheme(systemTheme);
+
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      updateTheme(colorScheme);
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, isThemeLoaded }}>
       {children}
     </ThemeContext.Provider>
   );

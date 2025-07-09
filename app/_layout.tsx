@@ -2,7 +2,7 @@ import { ThemeProvider, useThemeContext } from "@/context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -10,40 +10,55 @@ import { darkTheme, lightTheme } from "../themes";
 import "./global.css";
 
 function ThemedLayout() {
-  const { theme, toggleTheme } = useThemeContext();
-  const paperTheme = theme === "dark" ? darkTheme : lightTheme;
-  const [checking, setChecking] = useState(true);
+  const { theme, isThemeLoaded } = useThemeContext();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
   const segments = useSegments();
+
+  const paperTheme = theme === "dark" ? darkTheme : lightTheme;
 
   useEffect(() => {
     const checkAuth = async () => {
       const inAuth = segments[0] === "(auth)";
-      const family = await AsyncStorage.getItem("familyData");
-      if (!family) {
-        if (!inAuth) router.replace("/(auth)/family-login");
-        setChecking(false);
-        return;
-      }
-      const user = await AsyncStorage.getItem("userData");
-      if (!user) {
-        if (!inAuth) router.replace("/(auth)/user-login");
-        setChecking(false);
-        return;
-      }
+      try {
+        const family = await AsyncStorage.getItem("familyData");
+        if (!family) {
+          if (!inAuth) router.replace("/(auth)/family-login");
+          setCheckingAuth(false);
+          return;
+        }
 
-      if (inAuth) router.replace("/");
-      setChecking(false);
+        const user = await AsyncStorage.getItem("userData");
+        if (!user) {
+          if (!inAuth) router.replace("/(auth)/user-login");
+          setCheckingAuth(false);
+          return;
+        }
+
+        if (inAuth) router.replace("/");
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      } finally {
+        setCheckingAuth(false);
+      }
     };
+
     checkAuth();
   }, [segments]);
 
-  if (checking) {
+  if (!isThemeLoaded || checkingAuth) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <SafeAreaView className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
-            <ActivityIndicator />
+          <SafeAreaView
+            style={{ flex: 1 }}
+            className={theme === "dark" ? "bg-gray-900" : "bg-white"}
+          >
+            <PaperProvider theme={paperTheme}>
+              <View className="flex-1 justify-center items-center">
+                <ActivityIndicator size="large" />
+              </View>
+            </PaperProvider>
           </SafeAreaView>
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -53,12 +68,12 @@ function ThemedLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SafeAreaView className={`${theme === "dark" ? "dark" : ""} flex-1`}>
+        <SafeAreaView
+          style={{ flex: 1 }}
+          className="dark:bg-background-dark bg-background"
+        >
           <PaperProvider theme={paperTheme}>
-            <View className="absolute top-4 right-4 z-10">
-              <ToggleButton toggleTheme={toggleTheme} currentTheme={theme} />
-            </View>
-            <View className="p-4 flex-1">
+            <View className="flex-1">
               <Slot />
             </View>
           </PaperProvider>
@@ -68,17 +83,7 @@ function ThemedLayout() {
   );
 }
 
-function ToggleButton({ toggleTheme, currentTheme }: any) {
-  return (
-    <Pressable onPress={toggleTheme} className="px-3 py-2 rounded-full bg-black/10 dark:bg-white/10 backdrop-blur-sm shadow-md">
-      <Text className="text-lg font-semibold text-black dark:text-white">
-        {currentTheme === "dark" ? "☀️" : "🌙"}
-      </Text>
-    </Pressable>
-  );
-}
-
-export default function Layout() {
+export default function RootLayout() {
   return (
     <ThemeProvider>
       <ThemedLayout />
