@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useSegments } from "expo-router";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 import { AppState } from "react-native";
 
@@ -34,13 +34,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setFamily(storedFamily ? JSON.parse(storedFamily) : null);
       setUser(storedUser ? JSON.parse(storedUser) : null);
-
+      const path = segments.join("/");
       const inAuth = segments[0] === "(auth)";
+      const inFamilyLogin = path === "(auth)/family-login";
+      const inUserLogin = path === "(auth)/user-login";
 
       if (!storedFamily) {
-        if (!inAuth) router.replace("/(auth)/family-login");
+        if (!inFamilyLogin) router.replace("/(auth)/family-login");
       } else if (!storedUser) {
-        if (!inAuth) router.replace("/(auth)/user-login");
+        if (!inUserLogin) router.replace("/(auth)/user-login");
       } else {
         if (inAuth) router.replace("/");
       }

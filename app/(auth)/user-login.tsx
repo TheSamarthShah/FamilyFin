@@ -1,9 +1,10 @@
 import Button from "@/components/Button";
 import Loading from "@/components/Loading";
+import PageWrapper from "@/components/PageWrapper";
 import { useLoading } from "@/context/LoadingContext";
 import { useToast } from "@/context/ToastContext";
 import { getUsers } from "@/services/sheets";
-import { BUTTON_TXT } from "@/utils/text";
+import { BUTTON_TXT, COMMON_TXT } from "@/utils/text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -20,11 +21,10 @@ export default function UserLogin() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>();
   const { isLoading, setLoading } = useLoading();
-  const router = useRouter();
   const { showToast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
-    showToast("Login Successful", "success");
     const init = async () => {
       const storedUser = await AsyncStorage.getItem("userData");
       if (storedUser) {
@@ -34,10 +34,11 @@ export default function UserLogin() {
 
       try {
         setLoading(true);
-        const users = await getUsers();
-        setUsers(users);
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
       } catch (err) {
         console.error("Failed to fetch users:", err);
+        showToast("Unable to load users", "error");
       } finally {
         setLoading(false);
       }
@@ -48,7 +49,10 @@ export default function UserLogin() {
 
   const handleLogin = async () => {
     const user = users.find((u) => u.code === selectedUser);
-    if (!user) return;
+    if (!user) {
+      showToast("Please select your name", "warning");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -56,6 +60,7 @@ export default function UserLogin() {
       router.replace("/");
     } catch (err) {
       console.error("Login failed:", err);
+      showToast("Something went wrong during login", "error");
     } finally {
       setLoading(false);
     }
@@ -69,12 +74,13 @@ export default function UserLogin() {
   }));
 
   return (
-    <View className="flex-1 justify-center items-center px-6 bg-background dark:bg-background-dark">
-      <Text className="text-lg font-heading mb-4 text-primary dark:text-primary-dark">
-        Select Your Name
+    <PageWrapper scrollable className="flex justify-center">
+      <Text className="text-2xl font-heading text-primary dark:text-primary-dark mb-6 text-center">
+        {COMMON_TXT.APP_TITLE}
       </Text>
 
-      <View className="w-full space-y-2">
+      <View className="mb-4">
+        <Text className="text-muted dark:text-muted mb-1">Select Your Name</Text>
         <Dropdown
           data={userOptions}
           labelField="label"
@@ -82,21 +88,26 @@ export default function UserLogin() {
           value={selectedUser}
           placeholder="Choose your name"
           onChange={(item) => setSelectedUser(item.value)}
-          style={{ paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 8 }}
-          placeholderStyle={{ color: "#999" }}
+          style={{
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            borderWidth: 1,
+            borderColor: "#ccc",
+            borderRadius: 8,
+            backgroundColor: "white",
+          }}
+          placeholderStyle={{ color: "#9CA3AF" }}
           selectedTextStyle={{ color: "#000" }}
           containerStyle={{ borderRadius: 8 }}
         />
       </View>
 
-      <View className="mt-6 w-full">
-        <Button
-          title={BUTTON_TXT.CONTINUE}
-          onPress={handleLogin}
-          disabled={!selectedUser}
-          intent="primary"
-        />
-      </View>
-    </View>
+      <Button
+        title={BUTTON_TXT.CONTINUE}
+        onPress={handleLogin}
+        disabled={!selectedUser}
+        className="mt-6"
+      />
+    </PageWrapper>
   );
 }

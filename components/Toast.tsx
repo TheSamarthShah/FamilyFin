@@ -45,7 +45,7 @@ export default function ToastComponent({
     }).start();
 
     if (!sticky) {
-      const timer = setTimeout(fadeOut, 2500);
+      const timer = setTimeout(fadeOut, 3000);
       return () => clearTimeout(timer);
     }
   }, []);
