@@ -1,12 +1,14 @@
 import Button from "@/components/Button";
 import Loading from "@/components/Loading";
 import { useLoading } from "@/context/LoadingContext";
+import { useToast } from "@/context/ToastContext";
 import { getUsers } from "@/services/sheets";
 import { BUTTON_TXT } from "@/utils/text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
 
 type User = {
   code: string;
@@ -19,8 +21,10 @@ export default function UserLogin() {
   const [selectedUser, setSelectedUser] = useState<string>();
   const { isLoading, setLoading } = useLoading();
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
+    showToast("Login Successful", "success");
     const init = async () => {
       const storedUser = await AsyncStorage.getItem("userData");
       if (storedUser) {
@@ -59,6 +63,11 @@ export default function UserLogin() {
 
   if (isLoading) return <Loading />;
 
+  const userOptions = users.map((user) => ({
+    label: user.name,
+    value: user.code,
+  }));
+
   return (
     <View className="flex-1 justify-center items-center px-6 bg-background dark:bg-background-dark">
       <Text className="text-lg font-heading mb-4 text-primary dark:text-primary-dark">
@@ -66,14 +75,18 @@ export default function UserLogin() {
       </Text>
 
       <View className="w-full space-y-2">
-        {users.map((user) => (
-          <Button
-            key={user.code}
-            title={user.name}
-            intent={selectedUser === user.code ? "primary" : "secondary"}
-            onPress={() => setSelectedUser(user.code)}
-          />
-        ))}
+        <Dropdown
+          data={userOptions}
+          labelField="label"
+          valueField="value"
+          value={selectedUser}
+          placeholder="Choose your name"
+          onChange={(item) => setSelectedUser(item.value)}
+          style={{ paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 8 }}
+          placeholderStyle={{ color: "#999" }}
+          selectedTextStyle={{ color: "#000" }}
+          containerStyle={{ borderRadius: 8 }}
+        />
       </View>
 
       <View className="mt-6 w-full">
@@ -86,5 +99,4 @@ export default function UserLogin() {
       </View>
     </View>
   );
-
 }
