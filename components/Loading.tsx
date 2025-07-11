@@ -1,9 +1,23 @@
-import { ActivityIndicator, View } from "react-native";
+import { Colors } from "@/colors";
+import { useThemeContext } from "@/context/ThemeContext";
+import { ActivityIndicator, View, ViewStyle } from "react-native";
+import { moderateScale } from "react-native-size-matters";
 
 export default function Loading() {
+  const { theme } = useThemeContext();
+  const c = Colors[theme];
+
+  const containerStyle: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: c.bgPrimary,
+    padding: moderateScale(16),
+  };
+
   return (
-    <View className="flex-1 justify-center items-center bg-background dark:bg-background-dark">
-      <ActivityIndicator size="large"/>
+    <View style={containerStyle}>
+      <ActivityIndicator size="large" color={c.warning} />
     </View>
   );
 }

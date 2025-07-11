@@ -1,11 +1,13 @@
+import { Colors } from "@/colors";
 import { useThemeContext } from "@/context/ThemeContext";
 import React from "react";
 import {
-    ScrollView,
-    ScrollViewProps,
-    View,
-    ViewStyle
+  ScrollView,
+  ScrollViewProps,
+  View,
+  ViewStyle,
 } from "react-native";
+import { moderateScale, verticalScale } from "react-native-size-matters";
 
 type PageWrapperProps = {
   children: React.ReactNode;
@@ -13,8 +15,6 @@ type PageWrapperProps = {
   style?: ViewStyle;
   contentContainerStyle?: ViewStyle;
   safeAreaTop?: boolean;
-  className?: string;
-  contentClassName?: string;
 } & Omit<ScrollViewProps, "contentContainerStyle">;
 
 export default function PageWrapper({
@@ -23,32 +23,39 @@ export default function PageWrapper({
   style = {},
   contentContainerStyle = {},
   safeAreaTop = true,
-  className = "",
-  contentClassName = "",
   ...rest
 }: PageWrapperProps) {
   const { theme } = useThemeContext();
-  const bg = theme === "dark" ? "bg-background-dark" : "bg-background";
+  const c = Colors[theme];
+
   const Wrapper = scrollable ? ScrollView : View;
+
+  const baseStyle: ViewStyle = {
+    flex: 1,
+    paddingHorizontal: moderateScale(24),
+    backgroundColor: c.bgPrimary,
+    ...(style || {}),
+  };
+
+  const containerPaddingTop = safeAreaTop ? verticalScale(40) : 0;
 
   if (scrollable) {
     return (
       <ScrollView
         {...rest}
-        className={`flex-1 px-6 ${bg} ${className}`}
-        style={style}
+        style={baseStyle}
         contentContainerStyle={[
-          { paddingTop: safeAreaTop ? 40 : 0 },
+          { paddingTop: containerPaddingTop },
           contentContainerStyle,
         ]}
       >
-        <View className={contentClassName}>{children}</View>
+        {children}
       </ScrollView>
     );
   }
 
   return (
-    <View {...rest} className={`flex-1 px-6 ${bg} ${className}`} style={style}>
+    <View {...rest} style={baseStyle}>
       {children}
     </View>
   );

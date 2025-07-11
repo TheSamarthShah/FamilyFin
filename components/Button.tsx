@@ -1,24 +1,38 @@
+// components/Button.tsx
+
+import { Colors } from "@/colors";
+import { useThemeContext } from "@/context/ThemeContext";
 import React from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
+import {
+  moderateScale,
+  scale,
+  verticalScale,
+} from "react-native-size-matters";
 
 type ButtonProps = {
   title: string;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
-  intent?: "primary" | "accent" | "danger" | "warning" | "muted" | "neutral" | "secondary";
+  intent?:
+    | "primary"
+    | "accent"
+    | "danger"
+    | "warning"
+    | "muted"
+    | "neutral"
+    | "secondary";
   className?: string;
   textClassName?: string;
-};
-
-const intentClassMap = {
-  primary: "bg-primary dark:bg-primary-dark text-white",
-  accent: "bg-accent dark:bg-accent text-white",
-  danger: "bg-danger dark:bg-danger text-white",
-  warning: "bg-warning dark:bg-warning text-black",
-  muted: "bg-muted dark:bg-muted text-white",
-  neutral: "bg-neutral dark:bg-surface text-black dark:text-white",
-  secondary: "bg-surface border border-neutral text-black dark:text-white",
 };
 
 export default function Button({
@@ -30,21 +44,72 @@ export default function Button({
   className = "",
   textClassName = "",
 }: ButtonProps) {
-  const base = intentClassMap[intent] || intentClassMap["primary"];
+  const { theme } = useThemeContext();
+  const currentTheme = Colors[theme];
+
+  const bgColorMap: Record<string, string> = {
+    primary: currentTheme.textAccent,
+    accent: currentTheme.income,
+    danger: currentTheme.textDanger,
+    warning: currentTheme.warning,
+    muted: currentTheme.textMuted,
+    neutral: currentTheme.textNeutral,
+    secondary: currentTheme.bgSurface,
+  };
+
+  const textColorMap: Record<string, string> = {
+    primary: currentTheme.textOnPrimary,
+    accent: currentTheme.textOnPrimary,
+    danger: currentTheme.textOnPrimary,
+    warning: currentTheme.textOnPrimary,
+    muted: currentTheme.textOnPrimary,
+    neutral: currentTheme.textOnSurface,
+    secondary: currentTheme.textOnSurface,
+  };
+
+  const backgroundColor = bgColorMap[intent] || currentTheme.textAccent;
+  const textColor = textColorMap[intent] || currentTheme.textOnPrimary;
+
+  const styles = StyleSheet.create({
+    button: {
+      backgroundColor,
+      paddingVertical: verticalScale(12),
+      paddingHorizontal: scale(16),
+      borderRadius: moderateScale(8),
+      alignItems: "center",
+      justifyContent: "center",
+      opacity: disabled ? 0.5 : 1,
+    } as ViewStyle,
+    text: {
+      color: textColor,
+      fontSize: scale(14),
+      fontWeight: "500",
+    } as TextStyle,
+    loadingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: scale(8),
+    } as ViewStyle,
+  });
 
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      className={`px-4 py-3 rounded-md items-center justify-center ${base} ${disabled ? "opacity-50" : ""} ${className}`}
+      style={styles.button}
+      className={className}
     >
       {loading ? (
-        <View className="flex-row items-center space-x-2">
-          <ActivityIndicator color="#fff" size="small" />
-          <Text className={`font-semibold ${textClassName}`}>Loading...</Text>
+        <View style={styles.loadingRow}>
+          <ActivityIndicator color={textColor} size="small" />
+          <Text style={styles.text} className={textClassName}>
+            Loading...
+          </Text>
         </View>
       ) : (
-        <Text className={`font-semibold ${textClassName}`}>{title}</Text>
+        <Text style={styles.text} className={textClassName}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );

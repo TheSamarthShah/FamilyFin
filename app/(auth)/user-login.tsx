@@ -1,15 +1,22 @@
+import { Colors } from "@/colors";
 import Button from "@/components/Button";
+import Dropdown from "@/components/Dropdown";
 import Loading from "@/components/Loading";
 import PageWrapper from "@/components/PageWrapper";
 import { useLoading } from "@/context/LoadingContext";
+import { useThemeContext } from "@/context/ThemeContext";
 import { useToast } from "@/context/ToastContext";
 import { getUsers } from "@/services/sheets";
 import { BUTTON_TXT, COMMON_TXT } from "@/utils/text";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
+import { StyleSheet, Text, View } from "react-native";
+import {
+  moderateScale,
+  scale,
+  verticalScale,
+} from "react-native-size-matters";
 
 type User = {
   code: string;
@@ -22,7 +29,9 @@ export default function UserLogin() {
   const [selectedUser, setSelectedUser] = useState<string>();
   const { isLoading, setLoading } = useLoading();
   const { showToast } = useToast();
+  const { theme } = useThemeContext();
   const router = useRouter();
+  const color = Colors[theme];
 
   useEffect(() => {
     const init = async () => {
@@ -74,31 +83,20 @@ export default function UserLogin() {
   }));
 
   return (
-    <PageWrapper scrollable className="flex justify-center">
-      <Text className="text-2xl font-heading text-primary dark:text-primary-dark mb-6 text-center">
+    <PageWrapper scrollable>
+      <Text style={[styles.title, { color: color.textAccent }]}>
         {COMMON_TXT.APP_TITLE}
       </Text>
 
-      <View className="mb-4">
-        <Text className="text-muted dark:text-muted-dark mb-1">Select Your Name</Text>
+      <View style={styles.dropdownWrapper}>
+        <Text style={[styles.label, { color: color.textMuted }]}>
+          Select Your Name
+        </Text>
         <Dropdown
-          data={userOptions}
-          labelField="label"
-          valueField="value"
+          options={userOptions}
           value={selectedUser}
-          placeholder="Choose your name"
           onChange={(item) => setSelectedUser(item.value)}
-          style={{
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            borderWidth: 1,
-            borderColor: "#ccc",
-            borderRadius: 8,
-            backgroundColor: "white",
-          }}
-          placeholderStyle={{ color: "#9CA3AF" }}
-          selectedTextStyle={{ color: "#000" }}
-          containerStyle={{ borderRadius: 8 }}
+          placeholder="Choose your name"
         />
       </View>
 
@@ -111,3 +109,19 @@ export default function UserLogin() {
     </PageWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: scale(22),
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: verticalScale(24),
+  },
+  dropdownWrapper: {
+    marginBottom: verticalScale(16),
+  },
+  label: {
+    fontSize: moderateScale(14),
+    marginBottom: verticalScale(6),
+  },
+});
