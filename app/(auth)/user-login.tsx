@@ -80,7 +80,7 @@ export default function UserLogin() {
       </Text>
 
       <View className="mb-4">
-        <Text className="text-muted dark:text-muted mb-1">Select Your Name</Text>
+        <Text className="text-muted dark:text-muted-dark mb-1">Select Your Name</Text>
         <Dropdown
           data={userOptions}
           labelField="label"
