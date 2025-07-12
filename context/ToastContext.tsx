@@ -6,6 +6,7 @@ type ToastType = "success" | "error" | "warning" | "info";
 type Toast = {
   message: string;
   type?: ToastType;
+  key: number;
 };
 
 type ToastContextType = {
@@ -18,13 +19,27 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toast, setToast] = useState<Toast | null>(null);
 
   const showToast = (message: string, type: ToastType = "info") => {
-    setToast({ message, type });
+    const newToast: Toast = {
+      message,
+      type,
+      key: Date.now(), // 👈 new key ensures re-render
+    };
+    setToast(newToast);
   };
+
+  const clearToast = () => setToast(null);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toast && <ToastComponent {...toast} />}
+      {toast && (
+        <ToastComponent
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          onClose={clearToast}
+        />
+      )}
     </ToastContext.Provider>
   );
 };

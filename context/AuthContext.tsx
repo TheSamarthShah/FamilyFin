@@ -9,10 +9,15 @@ import React, {
 } from "react";
 import { AppState } from "react-native";
 
+type WorkbookData = {
+  sheetId: string;
+  scriptUrl: string;
+};
+
 type AuthContextType = {
   isLoading: boolean;
   user: any;
-  family: any;
+  workbookData: WorkbookData | null;
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -21,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
-  const [family, setFamily] = useState<any>(null);
+  const [workbookData, setWorkbookData] = useState<WorkbookData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
@@ -29,18 +34,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const checkAuth = useCallback(async () => {
     try {
-      const storedFamily = await AsyncStorage.getItem("familyData");
+      const storedSheetId = await AsyncStorage.getItem("sheetId");
+      const storedScriptUrl = await AsyncStorage.getItem("scriptUrl");
       const storedUser = await AsyncStorage.getItem("userData");
 
-      setFamily(storedFamily ? JSON.parse(storedFamily) : null);
+      if (storedSheetId && storedScriptUrl) {
+        setWorkbookData({
+          sheetId: storedSheetId,
+          scriptUrl: storedScriptUrl,
+        });
+      } else {
+        setWorkbookData(null);
+      }
+
       setUser(storedUser ? JSON.parse(storedUser) : null);
+
       const path = segments.join("/");
       const inAuth = segments[0] === "(auth)";
-      const inFamilyLogin = path === "(auth)/family-login";
+      const inWorkbookSetup = path === "(auth)/workbook-setup";
       const inUserLogin = path === "(auth)/user-login";
 
-      if (!storedFamily) {
-        if (!inFamilyLogin) router.replace("/(auth)/family-login");
+      if (!storedSheetId || !storedScriptUrl) {
+        if (!inWorkbookSetup) router.replace("/(auth)/workbook-setup");
       } else if (!storedUser) {
         if (!inUserLogin) router.replace("/(auth)/user-login");
       } else {
@@ -65,14 +80,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [checkAuth]);
 
   const logout = async () => {
-    await AsyncStorage.multiRemove(["familyData", "userData"]);
+    await AsyncStorage.multiRemove(["sheetId", "scriptUrl", "userData"]);
     setUser(null);
-    setFamily(null);
-    router.replace("/(auth)/family-login");
+    setWorkbookData(null);
+    router.replace("/(auth)/workbook-setup");
   };
 
   return (
-    <AuthContext.Provider value={{ isLoading, user, family, checkAuth, logout }}>
+    <AuthContext.Provider
+      value={{ isLoading, user, workbookData, checkAuth, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

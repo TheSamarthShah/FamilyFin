@@ -1,5 +1,5 @@
 export const loginFamily = async (code: string, password: string) => {
-  const res = await fetch("http://localhost:8090/api/collections/fffamilies/auth-with-password", {
+  const res = await fetch("http://10.73.124.183:8090/api/collections/fffamilies/auth-with-password", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
