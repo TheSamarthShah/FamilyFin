@@ -1,12 +1,12 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, Text, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
+import { Text, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScaledSheet, scale } from "react-native-size-matters";
+import { ScaledSheet } from "react-native-size-matters";
 
 interface NavbarProps {
   title?: string;
-  avatarUri?: string;
-  onAvatarPress?: () => void;
+  onMenuPress?: () => void;
   rightElement?: React.ReactNode;
   containerStyle?: ViewStyle;
   titleStyle?: TextStyle;
@@ -14,8 +14,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({
   title = "My App",
-  avatarUri = "https://i.pravatar.cc/150?img=3",
-  onAvatarPress,
+  onMenuPress,
   rightElement,
   containerStyle,
   titleStyle,
@@ -23,9 +22,15 @@ const Navbar: React.FC<NavbarProps> = ({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + scale(10) }, containerStyle]}>
-      <TouchableOpacity onPress={onAvatarPress}>
-        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top},
+        containerStyle,
+      ]}
+    >
+      <TouchableOpacity onPress={onMenuPress} style={styles.menu}>
+        <Ionicons name="menu" size={24} color="#111827" />
       </TouchableOpacity>
 
       <Text style={[styles.title, titleStyle]} numberOfLines={1}>
@@ -42,24 +47,25 @@ const styles = ScaledSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: "16@s",
+    paddingHorizontal: "12@s",
     backgroundColor: "#fff",
   },
-  avatar: {
+  menu: {
     width: "36@ms",
-    height: "36@ms",
-    borderRadius: "18@ms",
+    height: "30@ms",
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
-    fontSize: "18@ms",
-    fontWeight: "bold",
+    fontSize: "17@ms",
+    fontWeight: "600",
     color: "#111827",
     flex: 1,
     textAlign: "center",
   },
   right: {
     width: "36@ms",
-    height: "36@ms",
+    height: "30@ms",
     alignItems: "center",
     justifyContent: "center",
   },
