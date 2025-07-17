@@ -40,24 +40,20 @@ export default function DrawerLayout() {
       }}
     >
       <Drawer.Screen
-        name="(tabs)"
+        name="(quickadd)"
         options={{
-          title: "Dashboard",
+          title: "Quick Add",
           drawerIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={scale(20)} color={color} />
           ),
         }}
       />
       <Drawer.Screen
-        name="passwords"
+        name="(asset)"
         options={{
-          title: "Passwords",
+          title: "Asset Management",
           drawerIcon: ({ color, size }) => (
-            <Ionicons
-              name="lock-closed-outline"
-              size={scale(20)}
-              color={color}
-            />
+            <Ionicons name="home-outline" size={scale(20)} color={color} />
           ),
         }}
       />
