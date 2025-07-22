@@ -39,22 +39,22 @@ export default function TabLayout() {
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
       }}
-    >
-      <Tabs.Screen
+    >   
+    <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Add",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+            <Ionicons name="add-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="password"
+        name="edit"
         options={{
-          title: "Passwords",
+          title: "Edit",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="key-outline" size={size} color={color} />
+            <Ionicons name="create-outline" size={size} color={color} />
           ),
         }}
       />

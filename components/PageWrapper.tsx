@@ -37,7 +37,7 @@ export default function PageWrapper({
     ...(style || {}),
   };
 
-  const containerPaddingTop = safeAreaTop ? verticalScale(40) : 0;
+  const containerPaddingTop = safeAreaTop ? verticalScale(10) : 0;
 
   if (scrollable) {
     return (
