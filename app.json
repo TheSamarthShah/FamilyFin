@@ -4,11 +4,10 @@
     "slug": "family-fin",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "familyfin",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "sdkVersion": "50.0.0",
     "platforms": ["ios", "android", "web"],
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -54,12 +53,6 @@
     
     "experiments": {
       "typedRoutes": true
-    },
-    
-    "extra": {
-      "eas": {
-        "projectId": "your-project-id"
-      }
     }
   }
 }
