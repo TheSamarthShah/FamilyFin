@@ -32,7 +32,10 @@ type CardScrollerProps = {
   initialCards?: Record<string, any>[];
   fields: Field[];
   onChange?: (cards: Record<string, any>[]) => void;
+  onSave?: (cards: Record<string, any>[]) => void;
   maxCards?: number;
+  collapsible?: boolean;
+  initiallyCollapsed?: boolean;
 };
 
 const CardScroller = ({
@@ -40,12 +43,16 @@ const CardScroller = ({
   initialCards = [],
   fields,
   onChange,
+  onSave,
   maxCards = 10,
+  collapsible = false,
+  initiallyCollapsed = false,
 }: CardScrollerProps) => {
   const CARD_WIDTH = Dimensions.get('window').width * 0.85;
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cards, setCards] = useState<Record<string, any>[]>(initialCards);
+  const [isCollapsed, setIsCollapsed] = useState(initiallyCollapsed);
   const canAddMore = cards.length < maxCards;
   const fadeAnim = useState(new Animated.Value(0))[0];
   const { theme } = useThemeContext();
@@ -59,10 +66,12 @@ const CardScroller = ({
       useNativeDriver: true,
     }).start();
   }, []);
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+
+  // Enable LayoutAnimation for Android
+  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
   const createNewCard = () => {
     const newCard: Record<string, any> = {};
     fields.forEach(field => {
@@ -77,17 +86,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
     const updatedCards = [...cards, newCard];
     setCards(updatedCards);
     onChange?.(updatedCards);
-    
+
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
       setCurrentIndex(updatedCards.length - 1);
     }, 100);
   };
 
-   const handleRemoveCard = (index: number) => {
+  const handleRemoveCard = (index: number) => {
     if (cards.length <= 1) return;
 
-    // Configure animation
     LayoutAnimation.configureNext({
       duration: 300,
       update: {
@@ -103,7 +111,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
     const updatedCards = cards.filter((_, i) => i !== index);
     setCards(updatedCards);
     onChange?.(updatedCards);
-    
+
     const newIndex = Math.min(currentIndex, updatedCards.length - 1);
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
@@ -133,16 +141,34 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
     if (newIndex !== currentIndex) setCurrentIndex(newIndex);
   };
 
+  const toggleCollapse = () => {
+    if (!collapsible) return;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const handleSave = () => {
+    onSave?.(cards);
+  };
+
   // Dynamic styles based on theme
   const dynamicStyles = StyleSheet.create({
     wrapper: {
       marginBottom: moderateVerticalScale(24),
       paddingHorizontal: moderateScale(16),
     },
+    headerContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
     heading: {
       fontSize: moderateScale(18),
       fontWeight: '600',
       color: colorScheme.textPrimary,
+    },
+    collapseButton: {
+      padding: moderateScale(8),
     },
     card: {
       backgroundColor: colorScheme.bgSurface,
@@ -206,118 +232,205 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
       shadowOffset: { width: 0, height: 1 },
       elevation: 2,
     },
+    collapsedContent: {
+      paddingTop: moderateVerticalScale(8),
+    },
+    saveButtonContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: moderateScale(8),
+    },
+    saveButton: {
+      backgroundColor: colorScheme.bgSurfaceVariant,
+      borderWidth: 1,
+      borderColor: colorScheme.bgLevel3,
+      paddingHorizontal: moderateScale(12),
+      paddingVertical: moderateVerticalScale(6),
+      borderRadius: moderateScale(20),
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      fontSize: moderateScale(14),
+      fontWeight: '500',
+      marginLeft: moderateScale(6),
+      color: colorScheme.textPrimary,
+    },
+    saveIcon: {
+      color: colorScheme.textSuccess,
+    },
+    headerControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
   });
 
   return (
-     <View style={dynamicStyles.wrapper}>
-      <View style={styles.header}>
-        {label && <Text style={dynamicStyles.heading}>{label}</Text>}
-        <View style={styles.pagination}>
-          {cards.map((_, index) => (
-            <View 
-              key={index}
-              style={[
-                styles.paginationDot,
-                { 
-                  backgroundColor: index === currentIndex ? 
-                    colorScheme.textAccent : colorScheme.textNeutral 
-                }
-              ]}
-            />
-          ))}
+    <View style={dynamicStyles.wrapper}>
+      <View style={dynamicStyles.headerContainer}>
+        {label && (
+          <TouchableOpacity
+            onPress={toggleCollapse}
+            activeOpacity={collapsible ? 0.6 : 1}
+            style={{ flex: 1 }}
+          >
+            <Text style={dynamicStyles.heading}>{label}</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={dynamicStyles.headerControls}>
+          {!isCollapsed && (
+            <>
+              <View style={styles.pagination}>
+                {cards.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.paginationDot,
+                      {
+                        backgroundColor: index === currentIndex ?
+                          colorScheme.textAccent : colorScheme.textNeutral
+                      }
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+
+          {collapsible && (
+            <TouchableOpacity
+              onPress={toggleCollapse}
+              style={dynamicStyles.collapseButton}
+            >
+              <Ionicons
+                name={isCollapsed ? 'chevron-down' : 'chevron-up'}
+                size={24}
+                color={colorScheme.textPrimary}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      <View style={styles.carouselContainer}>
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          onMomentumScrollEnd={handleScroll}
-          snapToInterval={CARD_WIDTH + moderateScale(16)}
-          decelerationRate="fast"
-        >
-          {cards.map((card, index) => (
-            <View 
-              key={`card-${index}`} 
-              style={[dynamicStyles.card, { width: CARD_WIDTH }]}
+      {!isCollapsed && (
+        <>
+          <View style={styles.carouselContainer}>
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              onMomentumScrollEnd={handleScroll}
+              snapToInterval={CARD_WIDTH + moderateScale(16)}
+              decelerationRate="fast"
             >
-              {cards.length > 1 && (
-                <TouchableOpacity 
-                  style={dynamicStyles.deleteButton}
-                  onPress={() => handleRemoveCard(index)}
+              {cards.map((card, index) => (
+                <View
+                  key={`card-${index}`}
+                  style={[dynamicStyles.card, { width: CARD_WIDTH }]}
                 >
-                  <Ionicons name="close" size={16} color={colorScheme.textOnPrimary} />
-                </TouchableOpacity>
-              )}
-              
-              {fields.map((field) => (
-                <View key={`${index}-${field.key}`} style={styles.inputGroup}>
-                  <Text style={dynamicStyles.label}>
-                    {field.label}
-                    {field.required && <Text style={{ color: colorScheme.textDanger }}> *</Text>}
-                  </Text>
-                  <TextInput
-                    style={dynamicStyles.input}
-                    keyboardType={
-                      field.type === 'number'
-                        ? 'numeric'
-                        : field.type === 'email'
-                        ? 'email-address'
-                        : 'default'
-                    }
-                    secureTextEntry={field.type === 'password'}
-                    value={card[field.key]?.toString() || ''}
-                    onChangeText={(text) => {
-                      const value = field.type === 'number' ? 
-                        (text ? Number(text) : 0) : text;
-                      handleCardChange(index, field.key, value);
-                    }}
-                    placeholder={`Enter ${field.label.toLowerCase()}`}
-                    placeholderTextColor={colorScheme.textMuted}
-                  />
+                  {cards.length > 1 && (
+                    <TouchableOpacity
+                      style={dynamicStyles.deleteButton}
+                      onPress={() => handleRemoveCard(index)}
+                    >
+                      <Ionicons name="close" size={16} color={colorScheme.textOnPrimary} />
+                    </TouchableOpacity>
+                  )}
+
+                  {fields.map((field) => (
+                    <View key={`${index}-${field.key}`} style={styles.inputGroup}>
+                      <Text style={dynamicStyles.label}>
+                        {field.label}
+                        {field.required && <Text style={{ color: colorScheme.textDanger }}> *</Text>}
+                      </Text>
+                      <TextInput
+                        style={dynamicStyles.input}
+                        keyboardType={
+                          field.type === 'number'
+                            ? 'numeric'
+                            : field.type === 'email'
+                              ? 'email-address'
+                              : 'default'
+                        }
+                        secureTextEntry={field.type === 'password'}
+                        value={card[field.key]?.toString() || ''}
+                        onChangeText={(text) => {
+                          const value = field.type === 'number' ?
+                            (text ? Number(text) : 0) : text;
+                          handleCardChange(index, field.key, value);
+                        }}
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                        placeholderTextColor={colorScheme.textMuted}
+                      />
+                    </View>
+                  ))}
                 </View>
               ))}
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+            </ScrollView>
+          </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[
-            dynamicStyles.navButton, 
-            !(cards.length > 0 && currentIndex > 0) && styles.disabledButton
-          ]}
-          onPress={() => scrollToIndex(currentIndex - 1)}
-          disabled={!(cards.length > 0 && currentIndex > 0)}
-        >
-          <Ionicons name="chevron-back" size={20} color={colorScheme.textOnPrimary} />
-        </TouchableOpacity>
-        
-          <TouchableOpacity 
-            style={[dynamicStyles.addButton, !(canAddMore) && styles.disabledButton]} 
-            onPress={handleAddCard}
-            disabled = {!(canAddMore)}
-          >
-            <Ionicons name="add" size={20} color={colorScheme.textOnPrimary} />
-            <Text style={[styles.addButtonText, { color: colorScheme.textOnPrimary }]}>
-              Add Card
-            </Text>
-          </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            dynamicStyles.navButton, 
-            !(cards.length > 0 && currentIndex < cards.length - 1) && styles.disabledButton
-          ]}
-          onPress={() => scrollToIndex(currentIndex + 1)}
-          disabled={!(cards.length > 0 && currentIndex < cards.length - 1)}
-        >
-          <Ionicons name="chevron-forward" size={20} color={colorScheme.textOnPrimary} />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={[
+                dynamicStyles.navButton,
+                !(cards.length > 0 && currentIndex > 0) && styles.disabledButton
+              ]}
+              onPress={() => scrollToIndex(currentIndex - 1)}
+              disabled={!(cards.length > 0 && currentIndex > 0)}
+            >
+              <Ionicons name="chevron-back" size={20} color={colorScheme.textOnPrimary} />
+            </TouchableOpacity>
+
+            {onSave && (
+              <TouchableOpacity
+                style={dynamicStyles.saveButton}
+                onPress={handleSave}
+              >
+                <Ionicons
+                  name="save-outline"
+                  size={16}
+                  style={dynamicStyles.saveIcon}
+                />
+                <Text style={dynamicStyles.saveButtonText}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[dynamicStyles.addButton, !canAddMore && styles.disabledButton]}
+              onPress={handleAddCard}
+              disabled={!canAddMore}
+            >
+              <Ionicons name="add" size={20} color={colorScheme.textOnPrimary} />
+              <Text style={[styles.addButtonText, { color: colorScheme.textOnPrimary }]}>
+                Add Card
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                dynamicStyles.navButton,
+                !(cards.length > 0 && currentIndex < cards.length - 1) && styles.disabledButton
+              ]}
+              onPress={() => scrollToIndex(currentIndex + 1)}
+              disabled={!(cards.length > 0 && currentIndex < cards.length - 1)}
+            >
+              <Ionicons name="chevron-forward" size={20} color={colorScheme.textOnPrimary} />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {isCollapsed && (
+        <View style={dynamicStyles.collapsedContent}>
+          <Text style={{ color: colorScheme.textMuted }}>
+            {cards.length} card{cards.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -326,7 +439,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: moderateVerticalScale(16),
   },
@@ -362,6 +475,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontWeight: '500',
     marginLeft: moderateScale(8),
+  },
+  saveButtonText: {
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+    marginLeft: moderateScale(6),
   },
 });
 
