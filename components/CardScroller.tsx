@@ -16,15 +16,19 @@ import {
   UIManager,
   View
 } from 'react-native';
+import { RadioButton } from 'react-native-paper';
 import { moderateScale, moderateVerticalScale } from 'react-native-size-matters';
+import DatePicker from './DatePicker';
+import Dropdown, { Option } from './Dropdown';
 
-type FieldType = 'text' | 'number' | 'email' | 'password' | 'date';
+type FieldType = 'text' | 'number' | 'date' | 'select' | 'radio';
 
 export type Field = {
   key: string;
   label: string;
   type: FieldType;
   required?: boolean;
+  options?: Option[]; // Using the Option type from your Dropdown
 };
 
 type CardScrollerProps = {
@@ -36,6 +40,7 @@ type CardScrollerProps = {
   maxCards?: number;
   collapsible?: boolean;
   initiallyCollapsed?: boolean;
+  dateFormat?: (date: Date) => string;
 };
 
 const CardScroller = ({
@@ -47,12 +52,14 @@ const CardScroller = ({
   maxCards = 10,
   collapsible = false,
   initiallyCollapsed = false,
+  dateFormat = (date) => date.toLocaleDateString(),
 }: CardScrollerProps) => {
   const CARD_WIDTH = Dimensions.get('window').width * 0.85;
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cards, setCards] = useState<Record<string, any>[]>(initialCards);
   const [isCollapsed, setIsCollapsed] = useState(initiallyCollapsed);
+  const [showDatePicker, setShowDatePicker] = useState<number | null>(null);
   const canAddMore = cards.length < maxCards;
   const fadeAnim = useState(new Animated.Value(0))[0];
   const { theme } = useThemeContext();
@@ -67,7 +74,6 @@ const CardScroller = ({
     }).start();
   }, []);
 
-  // Enable LayoutAnimation for Android
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
@@ -86,7 +92,7 @@ const CardScroller = ({
     const updatedCards = [...cards, newCard];
     setCards(updatedCards);
     onChange?.(updatedCards);
-
+    
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
       setCurrentIndex(updatedCards.length - 1);
@@ -111,7 +117,7 @@ const CardScroller = ({
     const updatedCards = cards.filter((_, i) => i !== index);
     setCards(updatedCards);
     onChange?.(updatedCards);
-
+    
     const newIndex = Math.min(currentIndex, updatedCards.length - 1);
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
@@ -124,6 +130,13 @@ const CardScroller = ({
     updatedCards[index][key] = value;
     setCards(updatedCards);
     onChange?.(updatedCards);
+  };
+
+  const handleDateChange = (index: number, key: string, event: any, selectedDate?: Date) => {
+    setShowDatePicker(null);
+    if (selectedDate) {
+      handleCardChange(index, key, selectedDate);
+    }
   };
 
   const scrollToIndex = (index: number) => {
@@ -151,7 +164,65 @@ const CardScroller = ({
     onSave?.(cards);
   };
 
-  // Dynamic styles based on theme
+  const renderFieldInput = (field: Field, value: any, index: number, key: string) => {
+    switch (field.type) {
+      case 'date':
+        return (
+        <DatePicker
+          value={value ? new Date(value) : null}
+          onChange={(date) => handleCardChange(index, key, date)}
+          placeholder={`Select ${field.label.toLowerCase()}`}
+          style={dynamicStyles.dateInput}
+          textStyle={dynamicStyles.dateText}
+        />
+      );
+      
+      case 'select':
+        return (
+          <Dropdown
+            options={field.options || []}
+            value={value}
+            onChange={(selectedItem) => handleCardChange(index, key, selectedItem.value)}
+            placeholder={`Select ${field.label}`}
+            style={dynamicStyles.selectInput}
+            textStyle={{ color: colorScheme.textPrimary }}
+          />
+        );
+      
+      case 'radio':
+        return (
+          <View>
+            {(field.options || []).map((option) => (
+              <View key={option.value} style={dynamicStyles.radioContainer}>
+                <RadioButton
+                  value={option.value}
+                  status={value === option.value ? 'checked' : 'unchecked'}
+                  onPress={() => handleCardChange(index, key, option.value)}
+                  color={colorScheme.textAccent}
+                />
+                <Text style={dynamicStyles.radioLabel}>{option.label}</Text>
+              </View>
+            ))}
+          </View>
+        );
+      
+      default:
+        return (
+          <TextInput
+            style={dynamicStyles.input}
+            keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+            value={value?.toString() || ''}
+            onChangeText={(text) => {
+              const val = field.type === 'number' ? (text ? Number(text) : 0) : text;
+              handleCardChange(index, key, val);
+            }}
+            placeholder={`Enter ${field.label.toLowerCase()}`}
+            placeholderTextColor={colorScheme.textMuted}
+          />
+        );
+    }
+  };
+
   const dynamicStyles = StyleSheet.create({
     wrapper: {
       marginBottom: moderateVerticalScale(24),
@@ -198,6 +269,37 @@ const CardScroller = ({
       paddingVertical: moderateVerticalScale(10),
       fontSize: moderateScale(15),
       color: colorScheme.textPrimary,
+    },
+     dateInput: {
+    backgroundColor: colorScheme.bgSurfaceVariant,
+    borderWidth: 1,
+    borderColor: colorScheme.bgLevel2,
+    borderRadius: moderateScale(8),
+    justifyContent: 'center',
+  },
+  dateText: {
+    fontSize: moderateScale(15),
+    color: colorScheme.textPrimary,
+  },
+    selectInput: {
+      backgroundColor: colorScheme.bgSurfaceVariant,
+      borderWidth: 1,
+      borderColor: colorScheme.bgLevel2,
+      borderRadius: moderateScale(8),
+      paddingHorizontal: moderateScale(14),
+      paddingVertical: moderateVerticalScale(10),
+      fontSize: moderateScale(15),
+      color: colorScheme.textPrimary,
+    },
+    radioContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginVertical: moderateVerticalScale(4),
+    },
+    radioLabel: {
+      fontSize: moderateScale(14),
+      color: colorScheme.textPrimary,
+      marginLeft: moderateScale(8),
     },
     addButton: {
       backgroundColor: colorScheme.textAccent,
@@ -345,25 +447,7 @@ const CardScroller = ({
                         {field.label}
                         {field.required && <Text style={{ color: colorScheme.textDanger }}> *</Text>}
                       </Text>
-                      <TextInput
-                        style={dynamicStyles.input}
-                        keyboardType={
-                          field.type === 'number'
-                            ? 'numeric'
-                            : field.type === 'email'
-                              ? 'email-address'
-                              : 'default'
-                        }
-                        secureTextEntry={field.type === 'password'}
-                        value={card[field.key]?.toString() || ''}
-                        onChangeText={(text) => {
-                          const value = field.type === 'number' ?
-                            (text ? Number(text) : 0) : text;
-                          handleCardChange(index, field.key, value);
-                        }}
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                        placeholderTextColor={colorScheme.textMuted}
-                      />
+                      {renderFieldInput(field, card[field.key], index, field.key)}
                     </View>
                   ))}
                 </View>
@@ -435,7 +519,6 @@ const CardScroller = ({
   );
 };
 
-// Static styles that don't depend on theme
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
