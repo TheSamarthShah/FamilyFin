@@ -1,16 +1,17 @@
+// InputSelect.tsx
 import { Colors } from "@/colors";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    useColorScheme,
-    View,
+  Dimensions,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useColorScheme,
+  View,
 } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
@@ -42,8 +43,13 @@ export default function InputSelect({
   const theme = Colors[scheme];
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<View>(null);
-  const selectBoxRef = useRef<React.ComponentRef<typeof TouchableOpacity>>(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const selectBoxRef =
+    useRef<React.ComponentRef<typeof TouchableOpacity>>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   const measureDropdownPosition = () => {
     if (selectBoxRef.current) {
@@ -73,19 +79,17 @@ export default function InputSelect({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bgSurface }, style]}>
-      {/* Select Box - Added numberOfLines and ellipsizeMode to prevent wrapping */}
+    <View
+      style={[styles.container, { backgroundColor: theme.bgSurface }, style]}
+    >
+      {/* Select Box */}
       <TouchableOpacity
         ref={selectBoxRef}
         onPress={() => setShowDropdown((prev) => !prev)}
         style={[styles.selectBox, { borderColor: theme.textMuted }]}
       >
-        <Text 
-          style={{ 
-            color: theme.textPrimary, 
-            fontSize: scale(14),
-            flexShrink: 1  // Prevent text from forcing the container to grow
-          }}
+        <Text
+          style={[styles.selectText, { color: theme.textPrimary }]}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -95,24 +99,18 @@ export default function InputSelect({
           name={showDropdown ? "chevron-up" : "chevron-down"}
           size={moderateScale(16)}
           color={theme.textMuted}
-          style={{ marginLeft: scale(4) }}
+          style={styles.chevronIcon}
         />
       </TouchableOpacity>
 
-      {/* Input - Added numberOfLines to prevent wrapping */}
+      {/* Input */}
       <TextInput
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
         placeholderTextColor={theme.textMuted}
         keyboardType="default"
-        style={[
-          styles.input, 
-          { 
-            color: theme.textPrimary,
-            flex: 1,
-          }
-        ]}
+        style={[styles.input, { color: theme.textPrimary }]}
         numberOfLines={1}
       />
 
@@ -126,16 +124,16 @@ export default function InputSelect({
         <TouchableWithoutFeedback onPress={closeDropdown}>
           <View style={styles.modalOverlay} />
         </TouchableWithoutFeedback>
-        
+
         <View
           ref={dropdownRef}
           style={[
             styles.dropdown,
-            { 
+            {
               backgroundColor: theme.bgSurface,
               top: dropdownPosition.top,
               left: dropdownPosition.left,
-              width: dropdownPosition.width,
+              minWidth: dropdownPosition.width,
             },
           ]}
         >
@@ -153,7 +151,10 @@ export default function InputSelect({
                 },
               ]}
             >
-              <Text style={{ color: theme.textPrimary, fontSize: scale(14) }}>
+              <Text
+                style={[styles.dropdownItemText, { color: theme.textPrimary }]}
+                numberOfLines={1}
+              >
                 {opt.label}
               </Text>
             </TouchableOpacity>
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(6),
     position: "relative",
     zIndex: 1,
-    overflow: 'hidden', // Prevent content from overflowing
+    overflow: "hidden",
   },
   selectBox: {
     flexDirection: "row",
@@ -182,34 +183,36 @@ const styles = StyleSheet.create({
     marginRight: scale(8),
     borderRightWidth: 1,
     paddingRight: scale(8),
-    flexShrink: 1, // Prevent from growing too large
-    maxWidth: '40%', // Limit width of select box
+  },
+  selectText: {
+    fontSize: scale(14),
+    flexShrink: 1,
+  },
+  chevronIcon: {
+    marginLeft: scale(4),
   },
   input: {
     fontSize: scale(14),
-    padding: 0, // Remove default padding
-    margin: 0, // Remove default margins
-    flexShrink: 1, // Allow to shrink if needed
+    padding: 0,
+    margin: 0,
+    flex: 1,
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   dropdown: {
     position: "absolute",
     borderWidth: 1,
     borderRadius: moderateScale(6),
-    zIndex: 1000, // Very high z-index to ensure it's above everything
-    maxHeight: Dimensions.get('window').height * 0.4,
+    zIndex: 1000,
+    maxHeight: Dimensions.get("window").height * 0.4,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -217,5 +220,8 @@ const styles = StyleSheet.create({
   dropdownItem: {
     paddingVertical: verticalScale(8),
     paddingHorizontal: scale(12),
+  },
+  dropdownItemText: {
+    fontSize: scale(14),
   },
 });

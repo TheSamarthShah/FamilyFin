@@ -1,6 +1,6 @@
 import { Colors } from "@/colors";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -11,11 +11,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import {
-  moderateScale,
-  scale,
-  verticalScale,
-} from "react-native-size-matters";
+import { moderateScale, scale, verticalScale } from "react-native-size-matters";
 
 export type Option = { label: string; value: string };
 
@@ -36,11 +32,18 @@ export default function Dropdown({
   const [searchText, setSearchText] = useState("");
   const scheme = useColorScheme() ?? "light";
   const theme = Colors[scheme];
+  const searchInputRef = React.useRef<TextInput>(null);
 
   const selected = options.find((opt) => opt.value === value);
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  useEffect(() => {
+    if (modalVisible) {
+      //setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [modalVisible]);
 
   return (
     <>
@@ -60,6 +63,7 @@ export default function Dropdown({
             fontSize: scale(14),
             flex: 1,
           }}
+          numberOfLines={1}
         >
           {selected?.label ?? placeholder}
         </Text>
@@ -73,18 +77,18 @@ export default function Dropdown({
           onPressOut={() => setModalVisible(false)}
         >
           <View style={[styles.dropdown, { backgroundColor: theme.bgSurface }]}>
-            {/* Sticky Search */}
+            {/* Search Input */}
             <View
               style={{
                 padding: scale(12),
                 borderBottomWidth: 1,
                 borderBottomColor: theme.bgLevel2,
-                backgroundColor: theme.bgSurface,
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Ionicons name="search" size={moderateScale(18)} color={theme.textMuted} />
                 <TextInput
+                  ref={searchInputRef}
                   value={searchText}
                   onChangeText={setSearchText}
                   placeholder="Search..."
@@ -95,15 +99,15 @@ export default function Dropdown({
                     color: theme.textPrimary,
                     fontSize: scale(14),
                   }}
-                  autoFocus
                 />
               </View>
             </View>
 
+            {/* Options List */}
             <FlatList
               data={filtered}
               keyExtractor={(item) => item.value}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="always"  // This is the key change
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={{
@@ -140,6 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     paddingHorizontal: scale(12),
     paddingVertical: verticalScale(10),
+    minHeight: verticalScale(40),
   },
   overlay: {
     flex: 1,

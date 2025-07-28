@@ -20,8 +20,9 @@ import { RadioButton } from 'react-native-paper';
 import { moderateScale, moderateVerticalScale } from 'react-native-size-matters';
 import DatePicker from './DatePicker';
 import Dropdown, { Option } from './Dropdown';
+import InputSelect from './InputSelect';
 
-type FieldType = 'text' | 'number' | 'date' | 'select' | 'radio';
+type FieldType = 'text' | 'number' | 'date' | 'select' | 'radio' | 'input-select';
 
 export type Field = {
   key: string;
@@ -167,18 +168,20 @@ const CardScroller = ({
   };
 
   const renderFieldInput = (field: Field, value: any, index: number, key: string) => {
+  const placeholder = `Enter ${field.label.toLowerCase()}`;
+  
   switch (field.type) {
-       case 'date':
-  return (
-    <DatePicker
-      value={value ? new Date(value) : null}
-      onChange={(date) => handleCardChange(index, key, date)}
-      placeholder={`Select ${field.label.toLowerCase()}`}
-      style={dynamicStyles.dateInput}
-      textStyle={dynamicStyles.dateText}
-      dateFormat={dateFormat}
-    />
-  );
+    case 'date':
+      return (
+        <DatePicker
+          value={value ? new Date(value) : null}
+          onChange={(date) => handleCardChange(index, key, date)}
+          placeholder={placeholder}
+          style={dynamicStyles.dateInput}
+          textStyle={dynamicStyles.dateText}
+          dateFormat={dateFormat}
+        />
+      );
     
     case 'select':
       return (
@@ -187,8 +190,6 @@ const CardScroller = ({
           value={value}
           onChange={(selectedItem) => handleCardChange(index, key, selectedItem.value)}
           placeholder={`Select ${field.label}`}
-          style={dynamicStyles.selectInput}
-          textStyle={{ color: colorScheme.textPrimary }}
         />
       );
     
@@ -209,6 +210,20 @@ const CardScroller = ({
         </View>
       );
     
+    case 'input-select':
+      const selectedOption = field.options?.find(opt => opt.value === value) || 
+        { label: placeholder, value: '' };
+      return (
+        <InputSelect
+          value={value}
+          onChange={(text) => handleCardChange(index, key, text)}
+          selectedOption={selectedOption}
+          onSelect={(option) => handleCardChange(index, key, option.value)}
+          options={field.options || []}
+          placeholder={placeholder}
+        />
+      );
+    
     default:
       return (
         <TextInput
@@ -219,7 +234,7 @@ const CardScroller = ({
             const val = field.type === 'number' ? (text ? Number(text) : 0) : text;
             handleCardChange(index, key, val);
           }}
-          placeholder={`Enter ${field.label.toLowerCase()}`}
+          placeholder={placeholder}
           placeholderTextColor={colorScheme.textMuted}
         />
       );
