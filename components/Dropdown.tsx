@@ -1,16 +1,16 @@
-// components/Dropdown.tsx
 import { Colors } from "@/colors";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
-  StyleProp,
+  FlatList,
+  Modal,
+  StyleSheet,
   Text,
-  TextStyle,
+  TextInput,
   TouchableOpacity,
   useColorScheme,
-  ViewStyle,
+  View,
 } from "react-native";
-import SelectDropdown from "react-native-select-dropdown";
 import {
   moderateScale,
   scale,
@@ -21,92 +21,134 @@ export type Option = { label: string; value: string };
 
 interface Props {
   options: Option[];
-  value: string | null | undefined;
+  value: string | null;
   onChange: (item: Option) => void;
   placeholder?: string;
-  style?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
 }
 
-/**
- * Responsive, theme-aware Dropdown component using react-native-select-dropdown
- */
 export default function Dropdown({
   options,
   value,
   onChange,
   placeholder = "Select an option",
-  style,
-  textStyle,
 }: Props) {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const scheme = useColorScheme() ?? "light";
   const theme = Colors[scheme];
-  const selectedIndex = options.findIndex((i) => i.value === value);
+
+  const selected = options.find((opt) => opt.value === value);
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
-    <SelectDropdown
-      data={options}
-      defaultValueByIndex={selectedIndex >= 0 ? selectedIndex : undefined}
-      onSelect={(selectedItem: Option) => onChange(selectedItem)}
-      dropdownStyle={{
-        backgroundColor: theme.bgSurface,
-        borderRadius: moderateScale(8),
-      }}
-      dropdownOverlayColor="rgba(0,0,0,0.2)"
-      renderButton={(selectedItem, isOpened) => (
-        <TouchableOpacity
-          style={[
-            {
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: theme.bgSurface,
-              borderWidth: 1,
-              borderColor: theme.textMuted,
-              borderRadius: moderateScale(8),
-              paddingHorizontal: scale(12),
-              paddingVertical: verticalScale(10),
-            },
-            style,
-          ]}
-        >
-          <Text
-            style={[
-              {
-                flex: 1,
-                color: selectedItem ? theme.textPrimary : theme.textMuted,
-                fontSize: scale(14),
-              },
-              textStyle,
-            ]}
-          >
-            {selectedItem?.label ?? placeholder}
-          </Text>
-          <Ionicons
-            name={isOpened ? "chevron-up" : "chevron-down"}
-            size={moderateScale(18)}
-            color={theme.textMuted}
-          />
-        </TouchableOpacity>
-      )}
-      renderItem={(item, index, isSelected) => (
-        <TouchableOpacity
-          key={`${item.value}-${index}`}
+    <>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          {
+            backgroundColor: theme.bgSurface,
+            borderColor: theme.textMuted,
+          },
+        ]}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text
           style={{
-            backgroundColor: isSelected ? theme.bgLevel2 : theme.bgSurface,
-            paddingVertical: verticalScale(10),
-            paddingHorizontal: scale(12),
+            color: selected ? theme.textPrimary : theme.textMuted,
+            fontSize: scale(14),
+            flex: 1,
           }}
         >
-          <Text
-            style={{
-              color: theme.textPrimary,
-              fontSize: scale(14),
-            }}
-          >
-            {item.label}
-          </Text>
+          {selected?.label ?? placeholder}
+        </Text>
+        <Ionicons name="chevron-down" size={moderateScale(18)} color={theme.textMuted} />
+      </TouchableOpacity>
+
+      <Modal transparent animationType="fade" visible={modalVisible}>
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPressOut={() => setModalVisible(false)}
+        >
+          <View style={[styles.dropdown, { backgroundColor: theme.bgSurface }]}>
+            {/* Sticky Search */}
+            <View
+              style={{
+                padding: scale(12),
+                borderBottomWidth: 1,
+                borderBottomColor: theme.bgLevel2,
+                backgroundColor: theme.bgSurface,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="search" size={moderateScale(18)} color={theme.textMuted} />
+                <TextInput
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  placeholder="Search..."
+                  placeholderTextColor={theme.textMuted}
+                  style={{
+                    flex: 1,
+                    marginLeft: scale(8),
+                    color: theme.textPrimary,
+                    fontSize: scale(14),
+                  }}
+                  autoFocus
+                />
+              </View>
+            </View>
+
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.value}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{
+                    padding: verticalScale(12),
+                    paddingHorizontal: scale(16),
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.bgLevel2,
+                  }}
+                  onPress={() => {
+                    onChange(item);
+                    setModalVisible(false);
+                    setSearchText("");
+                  }}
+                >
+                  <Text style={{ color: theme.textPrimary, fontSize: scale(14) }}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              style={{ maxHeight: verticalScale(250) }}
+            />
+          </View>
         </TouchableOpacity>
-      )}
-    />
+      </Modal>
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: moderateScale(8),
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(10),
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    paddingHorizontal: scale(20),
+  },
+  dropdown: {
+    borderRadius: moderateScale(8),
+    overflow: "hidden",
+  },
+});

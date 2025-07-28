@@ -1,5 +1,6 @@
 import { Colors } from "@/colors";
 import CardScroller, { Field } from "@/components/CardScroller";
+import InputSelect from "@/components/InputSelect";
 import { useThemeContext } from "@/context/ThemeContext";
 import React from "react";
 import { ScrollView, StyleSheet, Text } from "react-native";
@@ -154,12 +155,31 @@ export default function HomeScreen() {
       radioField: null
     }]);
   };
+  const [amount, setAmount] = React.useState("");
+const [selectedCurrency, setSelectedCurrency] = React.useState({
+  label: "USD",
+  value: "usd",
+});
+
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: palette.bgPrimary }]}
       contentContainerStyle={styles.contentContainer}
     >
+      <InputSelect
+  value={amount}
+  onChange={setAmount}
+  selectedOption={selectedCurrency}
+  onSelect={setSelectedCurrency}
+  options={[
+    { label: "USD", value: "usd" },
+    { label: "INR", value: "inr" },
+    { label: "EUR", value: "eur" },
+  ]}
+/>
+
+
       <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
         All Input Types Demo
       </Text>
