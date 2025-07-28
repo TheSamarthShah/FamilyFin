@@ -1,32 +1,20 @@
 // components/DatePicker.tsx
 import { Colors } from "@/colors";
 import { useThemeContext } from "@/context/ThemeContext";
-import { CalendarDate } from "@internationalized/date";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from "react";
-import { StyleProp, TextStyle, ViewStyle } from "react-native";
-import { Button, Portal } from "react-native-paper";
-import { DatePickerModal } from "react-native-paper-dates";
+import { Platform, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { moderateScale, scale, verticalScale } from "react-native-size-matters";
-
-// Convert JS Date to CalendarDate
-const toCalendarDate = (date: Date | null): CalendarDate | undefined => {
-  if (!date) return undefined;
-  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
-};
-
-// Convert CalendarDate to JS Date
-const fromCalendarDate = (calendarDate: CalendarDate): Date => {
-  return new Date(calendarDate.year, calendarDate.month - 1, calendarDate.day);
-};
 
 interface Props {
   value: Date | null;
   onChange: (date: Date) => void;
   placeholder?: string;
-  style?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
+  style?: ViewStyle;
+  textStyle?: any;
   minimumDate?: Date;
   maximumDate?: Date;
+  dateFormat?: (date: Date) => string;
 }
 
 export default function DatePicker({
@@ -35,89 +23,128 @@ export default function DatePicker({
   placeholder = "Select a date",
   style,
   textStyle,
-  minimumDate,
-  maximumDate,
+  minimumDate = new Date(2000, 0, 1),
+  maximumDate = new Date(2030, 11, 31),
+  dateFormat = (date) => date.toLocaleDateString(),
 }: Props) {
   const { theme } = useThemeContext();
   const colors = Colors[theme];
-  const [visible, setVisible] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
-  const showModal = () => setVisible(true);
-  const hideModal = () => setVisible(false);
-
-  const formatDate = () => {
-    if (!value) return placeholder;
-    return value.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  const handleQuickSelect = (daysOffset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    onChange(date);
   };
 
-  // Convert props to CalendarDate format
-  const calendarDate = value ? toCalendarDate(value) : undefined;
-  const startDate = minimumDate ? toCalendarDate(minimumDate) : undefined;
-  const endDate = maximumDate ? toCalendarDate(maximumDate) : undefined;
-
   return (
-    <>
-      <Button
-        mode="outlined"
-        onPress={showModal}
+    <View>
+      {/* Date Input Field */}
+      <TouchableOpacity
+        onPress={() => setShowPicker(true)}
         style={[
+          styles.dateInput,
           {
-            backgroundColor: colors.bgSurface,
-            borderColor: colors.textMuted,
-            borderRadius: moderateScale(8),
-            paddingHorizontal: scale(12),
-            paddingVertical: verticalScale(10),
-            justifyContent: "space-between",
+            backgroundColor: colors.bgSurfaceVariant,
+            borderColor: colors.bgLevel2,
           },
           style,
         ]}
-        labelStyle={[
-          {
-            color: value ? colors.textPrimary : colors.textMuted,
-            fontSize: scale(14),
-            textAlign: "left",
-          },
-          textStyle,
-        ]}
-        icon="calendar"
       >
-        {formatDate()}
-      </Button>
+        <Text
+          style={[
+            styles.dateText,
+            {
+              color: value ? colors.textPrimary : colors.textMuted,
+            },
+            textStyle,
+          ]}
+        >
+          {value ? dateFormat(value) : dateFormat(new Date())}
+        </Text>
+      </TouchableOpacity>
 
-      <Portal>
-       <DatePickerModal
-  mode="single"
-  visible={visible}
-  onDismiss={hideModal}
-  onConfirm={({ date }) => {
-    if (date) {
-      onChange(fromCalendarDate(date));
-    }
-    hideModal();
-  }}
-  // Only spread date if defined
-  {...(calendarDate ? { date: calendarDate } : {})}
-  // Only spread validRange if one of the dates exist
-  {...(startDate || endDate
-    ? {
-        validRange: {
-          ...(startDate ? { startDate } : {}),
-          ...(endDate ? { endDate } : {}),
-        },
-      }
-    : {})}
-  label="Select date"
-  saveLabel="Confirm"
-  animationType="slide"
-  locale="en"
-/>
+      {/* Quick Action Buttons */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity 
+          onPress={() => handleQuickSelect(-2)}
+          style={[
+            styles.quickActionButton,
+            { backgroundColor: colors.bgLevel2 }
+          ]}
+        >
+          <Text style={[styles.quickActionText, { color: colors.textPrimary }]}>
+            B/F Yest.
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => handleQuickSelect(-1)}
+          style={[
+            styles.quickActionButton,
+            { backgroundColor: colors.bgLevel2 }
+          ]}
+        >
+          <Text style={[styles.quickActionText, { color: colors.textPrimary }]}>
+            Yest.
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => handleQuickSelect(0)}
+          style={[
+            styles.quickActionButton,
+            { backgroundColor: colors.bgLevel2 }
+          ]}
+        >
+          <Text style={[styles.quickActionText, { color: colors.textPrimary }]}>
+            Today
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-
-      </Portal>
-    </>
+      {/* Date Picker Modal */}
+      {showPicker && (
+        <DateTimePicker
+          value={value || new Date()}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, selectedDate) => {
+            setShowPicker(false);
+            if (selectedDate) {
+              onChange(selectedDate);
+            }
+          }}
+          minimumDate={minimumDate}
+          maximumDate={maximumDate}
+          themeVariant={theme === 'dark' ? 'dark' : 'light'}
+        />
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  dateInput: {
+    borderWidth: 1,
+    borderRadius: moderateScale(8),
+    paddingHorizontal: scale(14),
+    paddingVertical: verticalScale(10),
+    justifyContent: 'center' as const, // Explicitly typed as allowed value
+  },
+  dateText: {
+    fontSize: scale(15),
+  },
+  quickActions: {
+    flexDirection: 'row' as const,
+    justifyContent: 'flex-start' as const,
+    marginTop: moderateScale(8),
+    gap: moderateScale(8),
+  },
+  quickActionButton: {
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(6),
+    borderRadius: moderateScale(20),
+  },
+  quickActionText: {
+    fontSize: scale(12),
+  },
+});

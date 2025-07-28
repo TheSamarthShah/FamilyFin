@@ -79,12 +79,14 @@ const CardScroller = ({
   }
 
   const createNewCard = () => {
-    const newCard: Record<string, any> = {};
-    fields.forEach(field => {
-      newCard[field.key] = field.type === 'number' ? 0 : '';
-    });
-    return newCard;
-  };
+  const newCard: Record<string, any> = {};
+  fields.forEach(field => {
+    // Set today's date as default for date fields, empty string for text, and 0 for numbers
+    newCard[field.key] = field.type === 'number' ? 0 : 
+                        field.type === 'date' ? new Date() : '';
+  });
+  return newCard;
+};
 
   const handleAddCard = () => {
     if (!canAddMore) return;
@@ -165,63 +167,64 @@ const CardScroller = ({
   };
 
   const renderFieldInput = (field: Field, value: any, index: number, key: string) => {
-    switch (field.type) {
-      case 'date':
-        return (
-        <DatePicker
-          value={value ? new Date(value) : null}
-          onChange={(date) => handleCardChange(index, key, date)}
-          placeholder={`Select ${field.label.toLowerCase()}`}
-          style={dynamicStyles.dateInput}
-          textStyle={dynamicStyles.dateText}
+  switch (field.type) {
+       case 'date':
+  return (
+    <DatePicker
+      value={value ? new Date(value) : null}
+      onChange={(date) => handleCardChange(index, key, date)}
+      placeholder={`Select ${field.label.toLowerCase()}`}
+      style={dynamicStyles.dateInput}
+      textStyle={dynamicStyles.dateText}
+      dateFormat={dateFormat}
+    />
+  );
+    
+    case 'select':
+      return (
+        <Dropdown
+          options={field.options || []}
+          value={value}
+          onChange={(selectedItem) => handleCardChange(index, key, selectedItem.value)}
+          placeholder={`Select ${field.label}`}
+          style={dynamicStyles.selectInput}
+          textStyle={{ color: colorScheme.textPrimary }}
         />
       );
-      
-      case 'select':
-        return (
-          <Dropdown
-            options={field.options || []}
-            value={value}
-            onChange={(selectedItem) => handleCardChange(index, key, selectedItem.value)}
-            placeholder={`Select ${field.label}`}
-            style={dynamicStyles.selectInput}
-            textStyle={{ color: colorScheme.textPrimary }}
-          />
-        );
-      
-      case 'radio':
-        return (
-          <View>
-            {(field.options || []).map((option) => (
-              <View key={option.value} style={dynamicStyles.radioContainer}>
-                <RadioButton
-                  value={option.value}
-                  status={value === option.value ? 'checked' : 'unchecked'}
-                  onPress={() => handleCardChange(index, key, option.value)}
-                  color={colorScheme.textAccent}
-                />
-                <Text style={dynamicStyles.radioLabel}>{option.label}</Text>
-              </View>
-            ))}
-          </View>
-        );
-      
-      default:
-        return (
-          <TextInput
-            style={dynamicStyles.input}
-            keyboardType={field.type === 'number' ? 'numeric' : 'default'}
-            value={value?.toString() || ''}
-            onChangeText={(text) => {
-              const val = field.type === 'number' ? (text ? Number(text) : 0) : text;
-              handleCardChange(index, key, val);
-            }}
-            placeholder={`Enter ${field.label.toLowerCase()}`}
-            placeholderTextColor={colorScheme.textMuted}
-          />
-        );
-    }
-  };
+    
+    case 'radio':
+      return (
+        <View>
+          {(field.options || []).map((option) => (
+            <View key={option.value} style={dynamicStyles.radioContainer}>
+              <RadioButton
+                value={option.value}
+                status={value === option.value ? 'checked' : 'unchecked'}
+                onPress={() => handleCardChange(index, key, option.value)}
+                color={colorScheme.textAccent}
+              />
+              <Text style={dynamicStyles.radioLabel}>{option.label}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    
+    default:
+      return (
+        <TextInput
+          style={dynamicStyles.input}
+          keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+          value={value?.toString() || ''}
+          onChangeText={(text) => {
+            const val = field.type === 'number' ? (text ? Number(text) : 0) : text;
+            handleCardChange(index, key, val);
+          }}
+          placeholder={`Enter ${field.label.toLowerCase()}`}
+          placeholderTextColor={colorScheme.textMuted}
+        />
+      );
+  }
+};
 
   const dynamicStyles = StyleSheet.create({
     wrapper: {
@@ -275,12 +278,30 @@ const CardScroller = ({
     borderWidth: 1,
     borderColor: colorScheme.bgLevel2,
     borderRadius: moderateScale(8),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateVerticalScale(10),
     justifyContent: 'center',
   },
   dateText: {
     fontSize: moderateScale(15),
     color: colorScheme.textPrimary,
   },
+  quickActions: {
+  flexDirection: 'row',
+  justifyContent: 'flex-start',
+  marginTop: moderateVerticalScale(8),
+  gap: moderateScale(8),
+},
+quickActionButton: {
+  paddingHorizontal: moderateScale(12),
+  paddingVertical: moderateVerticalScale(6),
+  backgroundColor: colorScheme.bgLevel2,
+  borderRadius: moderateScale(20),
+},
+quickActionText: {
+  color: colorScheme.textPrimary,
+  fontSize: moderateScale(12),
+},
     selectInput: {
       backgroundColor: colorScheme.bgSurfaceVariant,
       borderWidth: 1,
