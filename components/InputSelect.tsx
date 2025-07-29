@@ -13,7 +13,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { moderateScale, scale, verticalScale } from "react-native-size-matters";
+import { moderateScale, moderateVerticalScale, scale, verticalScale } from "react-native-size-matters";
 
 type Option = {
   label: string;
@@ -79,16 +79,38 @@ export default function InputSelect({
   };
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: theme.bgSurface }, style]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.bgSurface }, style]}>
+      {/* Input */}
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={theme.textMuted}
+        keyboardType="default"
+        style={[
+          styles.input, 
+          { 
+            color: theme.textPrimary,
+            backgroundColor: theme.bgSurfaceVariant,
+            borderColor: theme.bgLevel2
+          }
+        ]}
+        numberOfLines={1}
+      />
+
       {/* Select Box */}
       <TouchableOpacity
         ref={selectBoxRef}
         onPress={() => setShowDropdown((prev) => !prev)}
-        style={[styles.selectBox, { borderColor: theme.textMuted }]}
+        style={[
+          styles.selectBox, 
+          { 
+            backgroundColor: theme.bgSurfaceVariant,
+            borderColor: theme.bgLevel2
+          }
+        ]}
       >
-        <Text
+        <Text 
           style={[styles.selectText, { color: theme.textPrimary }]}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -103,17 +125,6 @@ export default function InputSelect({
         />
       </TouchableOpacity>
 
-      {/* Input */}
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={theme.textMuted}
-        keyboardType="default"
-        style={[styles.input, { color: theme.textPrimary }]}
-        numberOfLines={1}
-      />
-
       {/* Dropdown Modal */}
       <Modal
         visible={showDropdown}
@@ -124,16 +135,17 @@ export default function InputSelect({
         <TouchableWithoutFeedback onPress={closeDropdown}>
           <View style={styles.modalOverlay} />
         </TouchableWithoutFeedback>
-
+        
         <View
           ref={dropdownRef}
           style={[
             styles.dropdown,
-            {
+            { 
               backgroundColor: theme.bgSurface,
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               minWidth: dropdownPosition.width,
+              borderColor: theme.bgLevel2,
             },
           ]}
         >
@@ -148,10 +160,11 @@ export default function InputSelect({
                     selectedOption.value === opt.value
                       ? theme.bgLevel2
                       : theme.bgSurface,
+                  borderBottomColor: theme.bgLevel2,
                 },
               ]}
             >
-              <Text
+              <Text 
                 style={[styles.dropdownItemText, { color: theme.textPrimary }]}
                 numberOfLines={1}
               >
@@ -167,48 +180,45 @@ export default function InputSelect({
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderRadius: moderateScale(8),
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: scale(10),
-    paddingVertical: verticalScale(6),
-    position: "relative",
-    zIndex: 1,
+    borderRadius: moderateScale(8),
     overflow: "hidden",
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: moderateScale(8),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateVerticalScale(10),
+    fontSize: moderateScale(15),
+    marginRight: moderateScale(8),
   },
   selectBox: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: scale(8),
-    borderRightWidth: 1,
-    paddingRight: scale(8),
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderRadius: moderateScale(8),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateVerticalScale(10),
+    minWidth: moderateScale(100),
   },
   selectText: {
-    fontSize: scale(14),
+    fontSize: moderateScale(15),
     flexShrink: 1,
   },
   chevronIcon: {
-    marginLeft: scale(4),
-  },
-  input: {
-    fontSize: scale(14),
-    padding: 0,
-    margin: 0,
-    flex: 1,
+    marginLeft: moderateScale(8),
   },
   modalOverlay: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "transparent",
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   dropdown: {
     position: "absolute",
     borderWidth: 1,
-    borderRadius: moderateScale(6),
+    borderRadius: moderateScale(8),
     zIndex: 1000,
     maxHeight: Dimensions.get("window").height * 0.4,
     shadowColor: "#000",
@@ -218,10 +228,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dropdownItem: {
-    paddingVertical: verticalScale(8),
-    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(16),
+    borderBottomWidth: 1,
   },
   dropdownItemText: {
-    fontSize: scale(14),
+    fontSize: moderateScale(15),
   },
 });
