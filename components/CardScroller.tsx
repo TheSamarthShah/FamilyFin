@@ -1,7 +1,7 @@
-import { Colors } from '@/colors';
-import { useThemeContext } from '@/context/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { Colors } from "@/colors";
+import { useThemeContext } from "@/context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -14,22 +14,38 @@ import {
   TextInput,
   TouchableOpacity,
   UIManager,
-  View
-} from 'react-native';
-import { RadioButton } from 'react-native-paper';
-import { moderateScale, moderateVerticalScale } from 'react-native-size-matters';
-import DatePicker from './DatePicker';
-import Dropdown, { Option } from './Dropdown';
-import InputSelect from './InputSelect';
+  View,
+} from "react-native";
+import { RadioButton } from "react-native-paper";
+import {
+  moderateScale,
+  moderateVerticalScale,
+} from "react-native-size-matters";
+import DatePicker from "./DatePicker";
+import Dropdown, { Option } from "./Dropdown";
+import InputSelect from "./InputSelect";
 
-type FieldType = 'text' | 'number' | 'date' | 'select' | 'radio' | 'input-select';
+type FieldType =
+  | "text"
+  | "number"
+  | "date"
+  | "select"
+  | "radio"
+  | "input-select";
+
+type InputSelectValue = {
+  inputValue: string;
+  selectedValue: string;
+};
 
 export type Field = {
   key: string;
   label: string;
   type: FieldType;
+  defaultValue: any;
   required?: boolean;
-  options?: Option[]; // Using the Option type from your Dropdown
+  options?: Option[];
+  defaultSelectedForInputSelect?: string;
 };
 
 type CardScrollerProps = {
@@ -55,7 +71,7 @@ const CardScroller = ({
   initiallyCollapsed = false,
   dateFormat = (date) => date.toLocaleDateString(),
 }: CardScrollerProps) => {
-  const CARD_WIDTH = Dimensions.get('window').width * 0.85;
+  const CARD_WIDTH = Dimensions.get("window").width * 0.85;
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cards, setCards] = useState<Record<string, any>[]>(initialCards);
@@ -75,19 +91,36 @@ const CardScroller = ({
     }).start();
   }, []);
 
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  if (
+    Platform.OS === "android" &&
+    UIManager.setLayoutAnimationEnabledExperimental
+  ) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
 
   const createNewCard = () => {
-  const newCard: Record<string, any> = {};
-  fields.forEach(field => {
-    // Set today's date as default for date fields, empty string for text, and 0 for numbers
-    newCard[field.key] = field.type === 'number' ? 0 : 
-                        field.type === 'date' ? new Date() : '';
-  });
-  return newCard;
-};
+    const newCard: Record<string, any> = {};
+    fields.forEach(field => {
+      if (field.type === 'input-select') {
+        // Handle input-select fields with defaultSelectedForInputSelect
+        newCard[field.key] = {
+          inputValue: '',
+          selectedValue: field.defaultSelectedForInputSelect !== undefined
+            ? field.defaultSelectedForInputSelect
+            : field.options && field.options.length > 0
+              ? field.options[0].value
+              : ''
+        };
+      } else {
+        newCard[field.key] = field.defaultValue !== undefined 
+          ? field.defaultValue 
+          : field.type === 'number' ? 0 
+          : field.type === 'date' ? new Date() 
+          : '';
+      }
+    });
+    return newCard;
+  };
 
   const handleAddCard = () => {
     if (!canAddMore) return;
@@ -95,7 +128,7 @@ const CardScroller = ({
     const updatedCards = [...cards, newCard];
     setCards(updatedCards);
     onChange?.(updatedCards);
-    
+
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
       setCurrentIndex(updatedCards.length - 1);
@@ -120,7 +153,7 @@ const CardScroller = ({
     const updatedCards = cards.filter((_, i) => i !== index);
     setCards(updatedCards);
     onChange?.(updatedCards);
-    
+
     const newIndex = Math.min(currentIndex, updatedCards.length - 1);
     if (newIndex !== currentIndex) {
       setCurrentIndex(newIndex);
@@ -135,7 +168,12 @@ const CardScroller = ({
     onChange?.(updatedCards);
   };
 
-  const handleDateChange = (index: number, key: string, event: any, selectedDate?: Date) => {
+  const handleDateChange = (
+    index: number,
+    key: string,
+    event: any,
+    selectedDate?: Date
+  ) => {
     setShowDatePicker(null);
     if (selectedDate) {
       handleCardChange(index, key, selectedDate);
@@ -153,7 +191,9 @@ const CardScroller = ({
 
   const handleScroll = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(contentOffset / (CARD_WIDTH + moderateScale(16)));
+    const newIndex = Math.round(
+      contentOffset / (CARD_WIDTH + moderateScale(16))
+    );
     if (newIndex !== currentIndex) setCurrentIndex(newIndex);
   };
 
@@ -167,79 +207,104 @@ const CardScroller = ({
     onSave?.(cards);
   };
 
-  const renderFieldInput = (field: Field, value: any, index: number, key: string) => {
-  const placeholder = `Enter ${field.label.toLowerCase()}`;
-  
-  switch (field.type) {
-    case 'date':
-      return (
-        <DatePicker
-          value={value ? new Date(value) : null}
-          onChange={(date) => handleCardChange(index, key, date)}
-          placeholder={placeholder}
-          style={dynamicStyles.dateInput}
-          textStyle={dynamicStyles.dateText}
-          dateFormat={dateFormat}
-        />
-      );
-    
-    case 'select':
-      return (
-        <Dropdown
-          options={field.options || []}
-          value={value}
-          onChange={(selectedItem) => handleCardChange(index, key, selectedItem.value)}
-          placeholder={`Select ${field.label}`}
-        />
-      );
-    
-    case 'radio':
-      return (
-        <View>
-          {(field.options || []).map((option) => (
-            <View key={option.value} style={dynamicStyles.radioContainer}>
-              <RadioButton
-                value={option.value}
-                status={value === option.value ? 'checked' : 'unchecked'}
-                onPress={() => handleCardChange(index, key, option.value)}
-                color={colorScheme.textAccent}
-              />
-              <Text style={dynamicStyles.radioLabel}>{option.label}</Text>
-            </View>
-          ))}
-        </View>
-      );
-    
-    case 'input-select':
-      const selectedOption = field.options?.find(opt => opt.value === value) || 
-        { label: placeholder, value: '' };
-      return (
-        <InputSelect
-          value={value}
-          onChange={(text) => handleCardChange(index, key, text)}
-          selectedOption={selectedOption}
-          onSelect={(option) => handleCardChange(index, key, option.value)}
-          options={field.options || []}
-          placeholder={placeholder}
-        />
-      );
-    
-    default:
-      return (
-        <TextInput
-          style={dynamicStyles.input}
-          keyboardType={field.type === 'number' ? 'numeric' : 'default'}
-          value={value?.toString() || ''}
-          onChangeText={(text) => {
-            const val = field.type === 'number' ? (text ? Number(text) : 0) : text;
-            handleCardChange(index, key, val);
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={colorScheme.textMuted}
-        />
-      );
-  }
-};
+  const renderFieldInput = (
+    field: Field,
+    value: any,
+    index: number,
+    key: string
+  ) => {
+    const placeholder = `Enter ${field.label.toLowerCase()}`;
+
+    switch (field.type) {
+      case "date":
+        return (
+          <DatePicker
+            value={value ? new Date(value) : null}
+            onChange={(date) => handleCardChange(index, key, date)}
+            placeholder={placeholder}
+            style={dynamicStyles.dateInput}
+            textStyle={dynamicStyles.dateText}
+            dateFormat={dateFormat}
+          />
+        );
+
+      case "select":
+        return (
+          <Dropdown
+            options={field.options || []}
+            value={value}
+            onChange={(selectedItem) =>
+              handleCardChange(index, key, selectedItem.value)
+            }
+            placeholder={`Select ${field.label}`}
+          />
+        );
+
+      case "radio":
+        return (
+          <View>
+            {(field.options || []).map((option) => (
+              <View key={option.value} style={dynamicStyles.radioContainer}>
+                <RadioButton
+                  value={option.value}
+                  status={value === option.value ? "checked" : "unchecked"}
+                  onPress={() => handleCardChange(index, key, option.value)}
+                  color={colorScheme.textAccent}
+                />
+                <Text style={dynamicStyles.radioLabel}>{option.label}</Text>
+              </View>
+            ))}
+          </View>
+        );
+
+      case 'input-select':
+        // Get current value or initialize with defaults
+        const currentValue: { inputValue: string; selectedValue: string } = value || {
+          inputValue: '',
+          selectedValue: field.defaultSelectedForInputSelect !== undefined
+            ? field.defaultSelectedForInputSelect
+            : field.options && field.options.length > 0
+              ? field.options[0].value
+              : ''
+        };
+
+        // Find the selected option
+        const selectedOption = field.options?.find(opt => opt.value === currentValue.selectedValue) || 
+          { label: placeholder, value: '' };
+
+        return (
+          <InputSelect
+            inputValue={currentValue.inputValue}
+            onInputChange={(text) => handleCardChange(index, key, {
+              ...currentValue,
+              inputValue: text
+            })}
+            selectedOption={selectedOption}
+            onOptionSelect={(option) => handleCardChange(index, key, {
+              ...currentValue,
+              selectedValue: option.value
+            })}
+            options={field.options || []}
+            placeholder={placeholder}
+          />
+        );
+      default:
+        return (
+          <TextInput
+            style={dynamicStyles.input}
+            keyboardType={field.type === "number" ? "numeric" : "default"}
+            value={value?.toString() || ""}
+            onChangeText={(text) => {
+              const val =
+                field.type === "number" ? (text ? Number(text) : 0) : text;
+              handleCardChange(index, key, val);
+            }}
+            placeholder={placeholder}
+            placeholderTextColor={colorScheme.textMuted}
+          />
+        );
+    }
+  };
 
   const dynamicStyles = StyleSheet.create({
     wrapper: {
@@ -247,13 +312,13 @@ const CardScroller = ({
       paddingHorizontal: moderateScale(16),
     },
     headerContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
     },
     heading: {
       fontSize: moderateScale(18),
-      fontWeight: '600',
+      fontWeight: "600",
       color: colorScheme.textPrimary,
     },
     collapseButton: {
@@ -267,14 +332,14 @@ const CardScroller = ({
       borderWidth: 1,
       borderColor: colorScheme.bgLevel2,
       shadowColor: colorScheme.textPrimary,
-      shadowOpacity: theme === 'light' ? 0.1 : 0.2,
+      shadowOpacity: theme === "light" ? 0.1 : 0.2,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
       elevation: 3,
     },
     label: {
       fontSize: moderateScale(14),
-      fontWeight: '500',
+      fontWeight: "500",
       color: colorScheme.textPrimary,
       marginBottom: moderateVerticalScale(6),
     },
@@ -288,35 +353,35 @@ const CardScroller = ({
       fontSize: moderateScale(15),
       color: colorScheme.textPrimary,
     },
-     dateInput: {
-    backgroundColor: colorScheme.bgSurfaceVariant,
-    borderWidth: 1,
-    borderColor: colorScheme.bgLevel2,
-    borderRadius: moderateScale(8),
-    paddingHorizontal: moderateScale(14),
-    paddingVertical: moderateVerticalScale(10),
-    justifyContent: 'center',
-  },
-  dateText: {
-    fontSize: moderateScale(15),
-    color: colorScheme.textPrimary,
-  },
-  quickActions: {
-  flexDirection: 'row',
-  justifyContent: 'flex-start',
-  marginTop: moderateVerticalScale(8),
-  gap: moderateScale(8),
-},
-quickActionButton: {
-  paddingHorizontal: moderateScale(12),
-  paddingVertical: moderateVerticalScale(6),
-  backgroundColor: colorScheme.bgLevel2,
-  borderRadius: moderateScale(20),
-},
-quickActionText: {
-  color: colorScheme.textPrimary,
-  fontSize: moderateScale(12),
-},
+    dateInput: {
+      backgroundColor: colorScheme.bgSurfaceVariant,
+      borderWidth: 1,
+      borderColor: colorScheme.bgLevel2,
+      borderRadius: moderateScale(8),
+      paddingHorizontal: moderateScale(14),
+      paddingVertical: moderateVerticalScale(10),
+      justifyContent: "center",
+    },
+    dateText: {
+      fontSize: moderateScale(15),
+      color: colorScheme.textPrimary,
+    },
+    quickActions: {
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      marginTop: moderateVerticalScale(8),
+      gap: moderateScale(8),
+    },
+    quickActionButton: {
+      paddingHorizontal: moderateScale(12),
+      paddingVertical: moderateVerticalScale(6),
+      backgroundColor: colorScheme.bgLevel2,
+      borderRadius: moderateScale(20),
+    },
+    quickActionText: {
+      color: colorScheme.textPrimary,
+      fontSize: moderateScale(12),
+    },
     selectInput: {
       backgroundColor: colorScheme.bgSurfaceVariant,
       borderWidth: 1,
@@ -328,8 +393,8 @@ quickActionText: {
       color: colorScheme.textPrimary,
     },
     radioContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginVertical: moderateVerticalScale(4),
     },
     radioLabel: {
@@ -339,8 +404,8 @@ quickActionText: {
     },
     addButton: {
       backgroundColor: colorScheme.textAccent,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: moderateScale(16),
       paddingVertical: moderateVerticalScale(10),
       borderRadius: moderateScale(20),
@@ -350,19 +415,19 @@ quickActionText: {
       width: moderateScale(40),
       height: moderateScale(40),
       borderRadius: moderateScale(20),
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     deleteButton: {
       backgroundColor: colorScheme.textDanger,
-      position: 'absolute',
+      position: "absolute",
       top: moderateScale(5),
       right: moderateScale(5),
       width: moderateScale(24),
       height: moderateScale(24),
       borderRadius: moderateScale(12),
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       zIndex: 1,
       shadowColor: colorScheme.textPrimary,
       shadowOpacity: 0.2,
@@ -374,8 +439,8 @@ quickActionText: {
       paddingTop: moderateVerticalScale(8),
     },
     saveButtonContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginRight: moderateScale(8),
     },
     saveButton: {
@@ -385,12 +450,12 @@ quickActionText: {
       paddingHorizontal: moderateScale(12),
       paddingVertical: moderateVerticalScale(6),
       borderRadius: moderateScale(20),
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
     saveButtonText: {
       fontSize: moderateScale(14),
-      fontWeight: '500',
+      fontWeight: "500",
       marginLeft: moderateScale(6),
       color: colorScheme.textPrimary,
     },
@@ -398,8 +463,8 @@ quickActionText: {
       color: colorScheme.textSuccess,
     },
     headerControls: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
   });
 
@@ -426,9 +491,11 @@ quickActionText: {
                     style={[
                       styles.paginationDot,
                       {
-                        backgroundColor: index === currentIndex ?
-                          colorScheme.textAccent : colorScheme.textNeutral
-                      }
+                        backgroundColor:
+                          index === currentIndex
+                            ? colorScheme.textAccent
+                            : colorScheme.textNeutral,
+                      },
                     ]}
                   />
                 ))}
@@ -442,7 +509,7 @@ quickActionText: {
               style={dynamicStyles.collapseButton}
             >
               <Ionicons
-                name={isCollapsed ? 'chevron-down' : 'chevron-up'}
+                name={isCollapsed ? "chevron-down" : "chevron-up"}
                 size={24}
                 color={colorScheme.textPrimary}
               />
@@ -473,17 +540,34 @@ quickActionText: {
                       style={dynamicStyles.deleteButton}
                       onPress={() => handleRemoveCard(index)}
                     >
-                      <Ionicons name="close" size={16} color={colorScheme.textOnPrimary} />
+                      <Ionicons
+                        name="close"
+                        size={16}
+                        color={colorScheme.textOnPrimary}
+                      />
                     </TouchableOpacity>
                   )}
 
                   {fields.map((field) => (
-                    <View key={`${index}-${field.key}`} style={styles.inputGroup}>
+                    <View
+                      key={`${index}-${field.key}`}
+                      style={styles.inputGroup}
+                    >
                       <Text style={dynamicStyles.label}>
                         {field.label}
-                        {field.required && <Text style={{ color: colorScheme.textDanger }}> *</Text>}
+                        {field.required && (
+                          <Text style={{ color: colorScheme.textDanger }}>
+                            {" "}
+                            *
+                          </Text>
+                        )}
                       </Text>
-                      {renderFieldInput(field, card[field.key], index, field.key)}
+                      {renderFieldInput(
+                        field,
+                        card[field.key],
+                        index,
+                        field.key
+                      )}
                     </View>
                   ))}
                 </View>
@@ -495,12 +579,17 @@ quickActionText: {
             <TouchableOpacity
               style={[
                 dynamicStyles.navButton,
-                !(cards.length > 0 && currentIndex > 0) && styles.disabledButton
+                !(cards.length > 0 && currentIndex > 0) &&
+                  styles.disabledButton,
               ]}
               onPress={() => scrollToIndex(currentIndex - 1)}
               disabled={!(cards.length > 0 && currentIndex > 0)}
             >
-              <Ionicons name="chevron-back" size={20} color={colorScheme.textOnPrimary} />
+              <Ionicons
+                name="chevron-back"
+                size={20}
+                color={colorScheme.textOnPrimary}
+              />
             </TouchableOpacity>
 
             {onSave && (
@@ -513,19 +602,29 @@ quickActionText: {
                   size={16}
                   style={dynamicStyles.saveIcon}
                 />
-                <Text style={dynamicStyles.saveButtonText}>
-                  Save
-                </Text>
+                <Text style={dynamicStyles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              style={[dynamicStyles.addButton, !canAddMore && styles.disabledButton]}
+              style={[
+                dynamicStyles.addButton,
+                !canAddMore && styles.disabledButton,
+              ]}
               onPress={handleAddCard}
               disabled={!canAddMore}
             >
-              <Ionicons name="add" size={20} color={colorScheme.textOnPrimary} />
-              <Text style={[styles.addButtonText, { color: colorScheme.textOnPrimary }]}>
+              <Ionicons
+                name="add"
+                size={20}
+                color={colorScheme.textOnPrimary}
+              />
+              <Text
+                style={[
+                  styles.addButtonText,
+                  { color: colorScheme.textOnPrimary },
+                ]}
+              >
                 Add Card
               </Text>
             </TouchableOpacity>
@@ -533,12 +632,17 @@ quickActionText: {
             <TouchableOpacity
               style={[
                 dynamicStyles.navButton,
-                !(cards.length > 0 && currentIndex < cards.length - 1) && styles.disabledButton
+                !(cards.length > 0 && currentIndex < cards.length - 1) &&
+                  styles.disabledButton,
               ]}
               onPress={() => scrollToIndex(currentIndex + 1)}
               disabled={!(cards.length > 0 && currentIndex < cards.length - 1)}
             >
-              <Ionicons name="chevron-forward" size={20} color={colorScheme.textOnPrimary} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colorScheme.textOnPrimary}
+              />
             </TouchableOpacity>
           </View>
         </>
@@ -547,7 +651,7 @@ quickActionText: {
       {isCollapsed && (
         <View style={dynamicStyles.collapsedContent}>
           <Text style={{ color: colorScheme.textMuted }}>
-            {cards.length} card{cards.length !== 1 ? 's' : ''}
+            {cards.length} card{cards.length !== 1 ? "s" : ""}
           </Text>
         </View>
       )}
@@ -557,14 +661,14 @@ quickActionText: {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
     marginBottom: moderateVerticalScale(16),
   },
   pagination: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   paginationDot: {
     width: moderateScale(8),
@@ -582,9 +686,9 @@ const styles = StyleSheet.create({
     marginBottom: moderateVerticalScale(16),
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: moderateScale(8),
   },
   disabledButton: {
@@ -592,12 +696,12 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontWeight: "500",
     marginLeft: moderateScale(8),
   },
   saveButtonText: {
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontWeight: "500",
     marginLeft: moderateScale(6),
   },
 });

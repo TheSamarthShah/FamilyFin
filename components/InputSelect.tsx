@@ -13,7 +13,12 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { moderateScale, moderateVerticalScale, scale, verticalScale } from "react-native-size-matters";
+import {
+  moderateScale,
+  moderateVerticalScale,
+  scale,
+  verticalScale,
+} from "react-native-size-matters";
 
 type Option = {
   label: string;
@@ -21,20 +26,20 @@ type Option = {
 };
 
 interface InputSelectProps {
-  value: string;
-  onChange: (value: string) => void;
+  inputValue: string;
+  onInputChange: (value: string) => void;
   selectedOption: Option;
-  onSelect: (option: Option) => void;
+  onOptionSelect: (option: Option) => void;
   options: Option[];
   placeholder?: string;
   style?: any;
 }
 
 export default function InputSelect({
-  value,
-  onChange,
+  inputValue,
+  onInputChange,
   selectedOption,
-  onSelect,
+  onOptionSelect,
   options,
   placeholder = "Enter value",
   style,
@@ -43,7 +48,7 @@ export default function InputSelect({
   const theme = Colors[scheme];
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<View>(null);
-  const selectBoxRef =
+const selectBoxRef =
     useRef<React.ComponentRef<typeof TouchableOpacity>>(null);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
@@ -70,7 +75,7 @@ export default function InputSelect({
   }, [showDropdown]);
 
   const handleSelect = (opt: Option) => {
-    onSelect(opt);
+    onOptionSelect(opt);
     setShowDropdown(false);
   };
 
@@ -79,21 +84,23 @@ export default function InputSelect({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bgSurface }, style]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.bgSurface }, style]}
+    >
       {/* Input */}
       <TextInput
-        value={value}
-        onChangeText={onChange}
+        value={inputValue}
+        onChangeText={onInputChange}
         placeholder={placeholder}
         placeholderTextColor={theme.textMuted}
         keyboardType="default"
         style={[
-          styles.input, 
-          { 
+          styles.input,
+          {
             color: theme.textPrimary,
             backgroundColor: theme.bgSurfaceVariant,
-            borderColor: theme.bgLevel2
-          }
+            borderColor: theme.bgLevel2,
+          },
         ]}
         numberOfLines={1}
       />
@@ -103,14 +110,14 @@ export default function InputSelect({
         ref={selectBoxRef}
         onPress={() => setShowDropdown((prev) => !prev)}
         style={[
-          styles.selectBox, 
-          { 
+          styles.selectBox,
+          {
             backgroundColor: theme.bgSurfaceVariant,
-            borderColor: theme.bgLevel2
-          }
+            borderColor: theme.bgLevel2,
+          },
         ]}
       >
-        <Text 
+        <Text
           style={[styles.selectText, { color: theme.textPrimary }]}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -135,12 +142,12 @@ export default function InputSelect({
         <TouchableWithoutFeedback onPress={closeDropdown}>
           <View style={styles.modalOverlay} />
         </TouchableWithoutFeedback>
-        
+
         <View
           ref={dropdownRef}
           style={[
             styles.dropdown,
-            { 
+            {
               backgroundColor: theme.bgSurface,
               top: dropdownPosition.top,
               left: dropdownPosition.left,
@@ -164,7 +171,7 @@ export default function InputSelect({
                 },
               ]}
             >
-              <Text 
+              <Text
                 style={[styles.dropdownItemText, { color: theme.textPrimary }]}
                 numberOfLines={1}
               >

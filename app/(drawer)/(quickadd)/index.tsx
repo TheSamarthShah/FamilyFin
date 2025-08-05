@@ -1,9 +1,8 @@
 import { Colors } from "@/colors";
 import CardScroller, { Field } from "@/components/CardScroller";
-import InputSelect from "@/components/InputSelect";
 import { useThemeContext } from "@/context/ThemeContext";
 import React from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { moderateScale, moderateVerticalScale } from "react-native-size-matters";
 
 export default function HomeScreen() {
@@ -12,7 +11,7 @@ export default function HomeScreen() {
 
   // Transaction Data
   const [transactions, setTransactions] = React.useState([
-    { id: Date.now().toString(), amount: '', description: '', date: null }
+    { id: Date.now().toString(), amount: 0, description: '', paymentMethod: null, date: null }
   ]);
 
   // Password Data
@@ -32,6 +31,13 @@ export default function HomeScreen() {
     }
   ]);
 
+  // Currency Input State
+  const [amount, setAmount] = React.useState("");
+  const [selectedCurrency, setSelectedCurrency] = React.useState({
+    label: "USD",
+    value: "usd",
+  });
+
   // Options for select and radio fields
   const paymentMethods = [
     { label: 'Credit Card', value: 'credit' },
@@ -47,39 +53,63 @@ export default function HomeScreen() {
 
   // Field Definitions
   const transactionFields: Field[] = [
-    { key: 'amount', label: 'Amount', type: 'number', required: true },
-    { key: 'description', label: 'Description', type: 'text' },
+    { 
+      key: 'amount', 
+      label: 'Amount', 
+      type: 'input-select', 
+      defaultValue: 0,
+      required: true,
+      options: [
+          { label: "USD", value: "usd" },
+          { label: "INR", value: "inr" },
+          { label: "EUR", value: "eur" },
+        ],
+        defaultSelectedForInputSelect: 'inr'
+    },
+    { 
+      key: 'description', 
+      label: 'Description', 
+      type: 'text', 
+      defaultValue: '' 
+    },
     { 
       key: 'paymentMethod', 
       label: 'Payment Method', 
       type: 'select',
+      defaultValue: null,
       options: paymentMethods,
       required: true
     },
-    { key: 'date', label: 'Date', type: 'date', required: true }
+    { 
+      key: 'date', 
+      label: 'Date', 
+      type: 'date', 
+      defaultValue: null,
+      required: true 
+    }
   ];
 
   const passwordFields: Field[] = [
-    { key: 'service', label: 'Service', type: 'text', required: true },
-    { key: 'username', label: 'Username', type: 'text', required: true },
-    { key: 'password', label: 'Password', type: 'text', required: true }
-  ];
-
-  const demoFields: Field[] = [
-    { key: 'textField', label: 'Text Input', type: 'text', required: true },
-    { key: 'numberField', label: 'Number Input', type: 'number' },
-    { key: 'dateField', label: 'Date Picker', type: 'date' },
     { 
-      key: 'selectField', 
-      label: 'Dropdown Select', 
-      type: 'select',
-      options: paymentMethods
+      key: 'service', 
+      label: 'Service', 
+      type: 'text', 
+      defaultValue: '',
+      required: true 
     },
     { 
-      key: 'radioField', 
-      label: 'Frequency', 
-      type: 'radio',
-      options: frequencyOptions
+      key: 'username', 
+      label: 'Username', 
+      type: 'text', 
+      defaultValue: '',
+      required: true 
+    },
+    { 
+      key: 'password', 
+      label: 'Password', 
+      type: 'text', 
+      defaultValue: '',
+      required: true 
     }
   ];
 
@@ -99,7 +129,7 @@ export default function HomeScreen() {
     console.log('Saving transactions:', validTransactions);
     setTransactions(validTransactions.length ? validTransactions : [{
       id: Date.now().toString(), 
-      amount: '', 
+      amount: 0, 
       description: '', 
       paymentMethod: null,
       date: null
@@ -155,47 +185,12 @@ export default function HomeScreen() {
       radioField: null
     }]);
   };
-  const [amount, setAmount] = React.useState("");
-const [selectedCurrency, setSelectedCurrency] = React.useState({
-  label: "USD",
-  value: "usd",
-});
-
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: palette.bgPrimary }]}
       contentContainerStyle={styles.contentContainer}
     >
-      <InputSelect
-  value={amount}
-  onChange={setAmount}
-  selectedOption={selectedCurrency}
-  onSelect={setSelectedCurrency}
-  options={[
-    { label: "USD", value: "usd" },
-    { label: "INR", value: "inr" },
-    { label: "EUR", value: "eur" },
-  ]}
-/>
-
-
-      <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-        All Input Types Demo
-      </Text>
-      <CardScroller
-        fields={demoFields}
-        label="Input Types Showcase"
-        initialCards={demoData}
-        onChange={handleDemoChange}
-        onSave={handleSaveDemo}
-        maxCards={5}
-        collapsible={true}
-      />
-
-      <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-        Transactions
-      </Text>
       <CardScroller
         fields={transactionFields}
         label="Payment Records"
@@ -205,10 +200,6 @@ const [selectedCurrency, setSelectedCurrency] = React.useState({
         maxCards={10}
         collapsible={true}
       />
-
-      <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-        Password Manager
-      </Text>
       <CardScroller
         fields={passwordFields}
         label="Saved Credentials"
