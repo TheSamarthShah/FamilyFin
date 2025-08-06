@@ -64,12 +64,15 @@ export default function HomeScreen() {
           { label: "INR", value: "inr" },
           { label: "EUR", value: "eur" },
         ],
-        defaultSelectedForInputSelect: 'inr'
+        defaultSelectedForInputSelect: 'inr',
+        textInputType: 'decimal'
     },
     { 
       key: 'description', 
       label: 'Description', 
-      type: 'text', 
+      type: 'text',
+      textInputType:'text',
+      multilineTextInput: true,
       defaultValue: '' 
     },
     { 
@@ -221,7 +224,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: moderateVerticalScale(32),
-    paddingHorizontal: moderateScale(16),
   },
   sectionTitle: {
     fontSize: moderateScale(18),

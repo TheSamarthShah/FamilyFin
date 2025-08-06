@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  InputModeOptions,
   Modal,
   StyleSheet,
   Text,
@@ -27,6 +28,7 @@ type Option = {
 
 interface InputSelectProps {
   inputValue: string;
+  inputType: InputModeOptions;
   onInputChange: (value: string) => void;
   selectedOption: Option;
   onOptionSelect: (option: Option) => void;
@@ -37,6 +39,7 @@ interface InputSelectProps {
 
 export default function InputSelect({
   inputValue,
+  inputType,
   onInputChange,
   selectedOption,
   onOptionSelect,
@@ -90,6 +93,7 @@ const selectBoxRef =
       {/* Input */}
       <TextInput
         value={inputValue}
+        inputMode={inputType}
         onChangeText={onInputChange}
         placeholder={placeholder}
         placeholderTextColor={theme.textMuted}
@@ -207,9 +211,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     borderRadius: moderateScale(8),
-    paddingHorizontal: moderateScale(14),
+    paddingHorizontal: moderateScale(8),
     paddingVertical: moderateVerticalScale(10),
-    minWidth: moderateScale(100),
+    minWidth: moderateScale(80),
   },
   selectText: {
     fontSize: moderateScale(15),
@@ -235,9 +239,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dropdownItem: {
-    paddingVertical: verticalScale(12),
+    paddingVertical: verticalScale(10),
     paddingHorizontal: scale(16),
     borderBottomWidth: 1,
+    borderRadius: moderateScale(8),
   },
   dropdownItemText: {
     fontSize: moderateScale(15),

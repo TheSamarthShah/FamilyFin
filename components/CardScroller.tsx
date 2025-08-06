@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  InputModeOptions,
   LayoutAnimation,
   Platform,
   ScrollView,
@@ -27,7 +28,6 @@ import InputSelect from "./InputSelect";
 
 type FieldType =
   | "text"
-  | "number"
   | "date"
   | "select"
   | "radio"
@@ -46,6 +46,8 @@ export type Field = {
   required?: boolean;
   options?: Option[];
   defaultSelectedForInputSelect?: string;
+  textInputType?: InputModeOptions;
+  multilineTextInput?: boolean;
 };
 
 type CardScrollerProps = {
@@ -71,7 +73,7 @@ const CardScroller = ({
   initiallyCollapsed = false,
   dateFormat = (date) => date.toLocaleDateString(),
 }: CardScrollerProps) => {
-  const CARD_WIDTH = Dimensions.get("window").width * 0.85;
+  const CARD_WIDTH = Dimensions.get("window").width * 0.90;
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cards, setCards] = useState<Record<string, any>[]>(initialCards);
@@ -114,7 +116,6 @@ const CardScroller = ({
       } else {
         newCard[field.key] = field.defaultValue !== undefined 
           ? field.defaultValue 
-          : field.type === 'number' ? 0 
           : field.type === 'date' ? new Date() 
           : '';
       }
@@ -275,6 +276,7 @@ const CardScroller = ({
         return (
           <InputSelect
             inputValue={currentValue.inputValue}
+            inputType={field.textInputType || 'text'}
             onInputChange={(text) => handleCardChange(index, key, {
               ...currentValue,
               inputValue: text
@@ -292,11 +294,12 @@ const CardScroller = ({
         return (
           <TextInput
             style={dynamicStyles.input}
-            keyboardType={field.type === "number" ? "numeric" : "default"}
+            multiline= {field.multilineTextInput}
+            inputMode={field.textInputType}
             value={value?.toString() || ""}
             onChangeText={(text) => {
               const val =
-                field.type === "number" ? (text ? Number(text) : 0) : text;
+                field.textInputType === "numeric" ? (text ? Number(text) : 0) : text;
               handleCardChange(index, key, val);
             }}
             placeholder={placeholder}
@@ -327,8 +330,8 @@ const CardScroller = ({
     card: {
       backgroundColor: colorScheme.bgSurface,
       borderRadius: moderateScale(12),
-      padding: moderateScale(20),
-      marginRight: moderateScale(16),
+      padding: moderateScale(15),
+      marginRight: moderateScale(2),
       borderWidth: 1,
       borderColor: colorScheme.bgLevel2,
       shadowColor: colorScheme.textPrimary,
@@ -625,7 +628,7 @@ const CardScroller = ({
                   { color: colorScheme.textOnPrimary },
                 ]}
               >
-                Add Card
+                Add
               </Text>
             </TouchableOpacity>
 
