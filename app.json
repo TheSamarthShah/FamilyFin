@@ -8,14 +8,19 @@
     "scheme": "familyfin",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["ios", "android", "web"],
-    "assetBundlePatterns": ["**/*"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.familyfin",
       "buildNumber": "1.0.0"
     },
-    
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -26,7 +31,6 @@
       "permissions": [],
       "edgeToEdgeEnabled": true
     },
-    
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -34,7 +38,6 @@
       "startUrl": "/",
       "lang": "en"
     },
-    
     "plugins": [
       "expo-router",
       [
@@ -48,9 +51,9 @@
             "backgroundColor": "#121212"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
-    
     "experiments": {
       "typedRoutes": true
     }

@@ -94,7 +94,7 @@ export default function UserLogin() {
         </Text>
         <Dropdown
           options={userOptions}
-          value={selectedUser}
+          value={selectedUser?? null}
           onChange={(item) => setSelectedUser(item.value)}
           placeholder="Choose your name"
         />
